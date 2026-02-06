@@ -37,7 +37,7 @@ export default function Navbar() {
         <NavBody>
           <NavbarLogo />
           <NavItems items={navItems} />
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2">
             <NavbarButton variant="invisible">
               <ThemeToggle />
             </NavbarButton>
@@ -49,10 +49,13 @@ export default function Navbar() {
         <MobileNav>
           <MobileNavHeader>
             <NavbarLogo />
+            <div className="flex items-center gap-4">
+            <ThemeToggle className="border-none" />
             <MobileNavToggle
               isOpen={isMobileMenuOpen}
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            />
+              />
+              </div>
           </MobileNavHeader>
 
           <MobileNavMenu
