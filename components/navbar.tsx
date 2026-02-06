@@ -37,11 +37,16 @@ export default function Navbar() {
         <NavBody>
           <NavbarLogo />
           <NavItems items={navItems} />
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1">
             <NavbarButton variant="invisible">
               <ThemeToggle />
             </NavbarButton>
-            <NavbarButton variant="primary" className="bg-gray-800 text-white dark:bg-white dark:text-black">Register</NavbarButton>
+            <NavbarButton
+              variant="primary"
+              className="bg-gray-800 text-white dark:bg-white dark:text-black"
+            >
+              Register
+            </NavbarButton>
           </div>
         </NavBody>
 
