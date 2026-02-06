@@ -1,9 +1,5 @@
 "use client";
 
 export default function Home() {
-
-  return (
-    <div className="relative  w-full">
-    </div>
-  );
+  return <div className="relative  w-full"></div>;
 }

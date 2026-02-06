@@ -10,26 +10,26 @@ import {
   MobileNavToggle,
   MobileNavMenu,
 } from "@/components/ui/resizable-navbar";
-import {useState} from "react";
+import { useState } from "react";
+import { ThemeToggle } from "./theme-toggle";
 
-export default function Navbar () {
+export default function Navbar() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
-
-    const navItems = [
-      {
-        name: "Home",
-        link: "/",
-      },
-      {
-        name: "Courses",
-        link: "/courses",
-      },
-      {
-        name: "About",
-        link: "/about",
-      },
-    ];
+  const navItems = [
+    {
+      name: "Home",
+      link: "/",
+    },
+    {
+      name: "Courses",
+      link: "/courses",
+    },
+    {
+      name: "About",
+      link: "/about",
+    },
+  ];
   return (
     <div className="relative  w-full">
       <ResizableNavbar>
@@ -38,6 +38,9 @@ export default function Navbar () {
           <NavbarLogo />
           <NavItems items={navItems} />
           <div className="flex items-center gap-4">
+            <NavbarButton variant="invisible">
+              <ThemeToggle />
+            </NavbarButton>
             <NavbarButton variant="primary">Register</NavbarButton>
           </div>
         </NavBody>
@@ -79,5 +82,5 @@ export default function Navbar () {
         </MobileNav>
       </ResizableNavbar>
     </div>
-  )
+  );
 }
