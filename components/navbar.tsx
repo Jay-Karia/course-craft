@@ -50,12 +50,12 @@ export default function Navbar() {
           <MobileNavHeader>
             <NavbarLogo />
             <div className="flex items-center gap-4">
-            <ThemeToggle className="border-none" />
-            <MobileNavToggle
-              isOpen={isMobileMenuOpen}
-              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              <ThemeToggle className="border-none" />
+              <MobileNavToggle
+                isOpen={isMobileMenuOpen}
+                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
               />
-              </div>
+            </div>
           </MobileNavHeader>
 
           <MobileNavMenu
