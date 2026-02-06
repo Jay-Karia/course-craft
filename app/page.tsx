@@ -1,7 +1,9 @@
+"use client";
+
 export default function Home() {
+
   return (
-    <div>
-      Hello Kinetix
+    <div className="relative  w-full">
     </div>
   );
 }
