@@ -41,7 +41,7 @@ export default function Navbar() {
             <NavbarButton variant="invisible">
               <ThemeToggle />
             </NavbarButton>
-            <NavbarButton variant="primary">Register</NavbarButton>
+            <NavbarButton variant="primary" className="bg-gray-800 text-white dark:bg-white dark:text-black">Register</NavbarButton>
           </div>
         </NavBody>
 
