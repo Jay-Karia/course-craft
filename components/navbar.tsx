@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/resizable-navbar";
 import { useState } from "react";
 import { ThemeToggle } from "./theme-toggle";
+import {FcGoogle} from "react-icons/fc";
 
 export default function Navbar() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -43,9 +44,11 @@ export default function Navbar() {
             </NavbarButton>
             <NavbarButton
               variant="primary"
-              className="bg-gray-800 text-white dark:bg-white dark:text-black"
+              className="bg-gray-100 dark:bg-white dark:text-black flex items-center justify-center"
+              // onClick={signInWithGoogle}
             >
-              Register
+              <FcGoogle className="mr-2" size={20}/>
+              Sign in
             </NavbarButton>
           </div>
         </NavBody>
@@ -79,11 +82,12 @@ export default function Navbar() {
             ))}
             <div className="flex w-full flex-col gap-4">
               <NavbarButton
-                onClick={() => setIsMobileMenuOpen(false)}
+                // onClick={signInWithGoogle}
                 variant="primary"
-                className="w-full"
+                className="w-full flex justify-center items-center"
               >
-                Register
+                <FcGoogle className="mr-2" size={20}/>
+                Sign In
               </NavbarButton>
             </div>
           </MobileNavMenu>
