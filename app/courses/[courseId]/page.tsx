@@ -2,7 +2,6 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import Image from "next/image";
 import { useParams } from "next/navigation";
 
 type CourseVideo = {
@@ -35,13 +34,16 @@ type CourseDetails = {
   modules?: CourseModule[];
 };
 
+const APPWRITE_VIDEO_URL =
+  "https://sgp.cloud.appwrite.io/v1/storage/buckets/69872bd5002381c18915/files/698762350015908687a3/view?project=6985f4df000a987b6a15&mode=public";
+
 const buildFallbackModules = (courseTitle: string): CourseModule[] => {
   const baseVideo: CourseVideo = {
     provider: "Sora AI",
     status: "queued",
     duration: "3-5 min",
     prompt: "Generate a concise explainer for this lesson.",
-    url: "https://example.com/sora-ai/preview.mp4",
+    url: APPWRITE_VIDEO_URL,
   };
 
   return [
@@ -269,6 +271,8 @@ export default function CoursePage() {
     );
   }, [modules, effectiveSelectedLessonId]);
 
+  const videoSrc = APPWRITE_VIDEO_URL;
+
   if (!courseId) {
     return (
       <div className="h-screen overflow-y-auto bg-slate-50/70 px-6 py-16 text-slate-900 dark:bg-slate-950 dark:text-slate-100">
@@ -329,34 +333,16 @@ export default function CoursePage() {
           <section className="space-y-6">
             <div className="overflow-hidden rounded-2xl border border-slate-200/70 bg-white/90 shadow-[0_10px_40px_-20px_rgba(15,23,42,0.35)] dark:border-slate-800/80 dark:bg-slate-900/70">
               <div className="aspect-video w-full overflow-hidden bg-slate-100 dark:bg-slate-800">
-                <div className="relative flex h-full w-full items-center justify-center">
-                  <Image
-                    alt={course.title}
-                    className="absolute inset-0 h-full w-full object-cover opacity-25"
-                    fill
-                    src={course.thumbnailUrl}
+                <video
+                  className="h-full w-full object-cover"
+                  controls
+                  preload="metadata"
+                >
+                  <source
+                    src={videoSrc}
+                    type="video/mp4"
                   />
-                  <div className="relative z-10 flex flex-col items-center gap-3 text-center">
-                    <div className="flex h-14 w-14 items-center justify-center rounded-full bg-white/90 text-slate-900 shadow-lg dark:bg-slate-950/80 dark:text-slate-100">
-                      <svg
-                        aria-hidden="true"
-                        className="h-6 w-6"
-                        fill="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path d="M8 5v14l11-7z" />
-                      </svg>
-                    </div>
-                    <div>
-                      <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                        Video placeholder
-                      </p>
-                      <p className="text-sm font-semibold">
-                        {selectedLesson?.title ?? "Select a lesson"}
-                      </p>
-                    </div>
-                  </div>
-                </div>
+                </video>
               </div>
               <div className="p-6">
                 <div className="flex flex-wrap items-center justify-between gap-3">
