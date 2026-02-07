@@ -72,6 +72,10 @@ export default function CourseCreatorForm() {
               `course:${result.course.id}`,
               JSON.stringify(result.course),
             );
+            localStorage.setItem(
+              `course:${result.course.id}`,
+              JSON.stringify(result.course),
+            );
           }
           router.push(`/courses/${result.course.id}`);
         }
@@ -88,7 +92,7 @@ export default function CourseCreatorForm() {
           <div className="space-y-10">
             <header className="space-y-3">
               <h1 className="text-3xl font-semibold tracking-tight text-slate-900 dark:text-slate-100 sm:text-4xl">
-                Turn raw materials into a video course
+                Turn raw materials into a personalized video course
               </h1>
               <p className="max-w-2xl text-sm text-slate-600 dark:text-slate-400">
                 Upload text, PDFs, and links. We will analyze the content and

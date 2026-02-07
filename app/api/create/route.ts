@@ -1,3 +1,4 @@
+// app/api/create/route.ts
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { NextResponse } from "next/server";
 import { Course } from "@/types/global";
@@ -13,21 +14,34 @@ type AiLesson = {
   title: string;
   summary: string;
   topics: string[];
+  videoScript?: string;
+  keyPoints?: string[];
+  duration?: string;
+  quiz?: {
+    questions: Array<{
+      question: string;
+      options: string[];
+      correctAnswer: string;
+      explanation: string;
+    }>;
+  };
 };
 
 type AiModule = {
   title: string;
   description: string;
+  estimatedTime?: string;
   lessons: AiLesson[];
 };
 
 type AiCourseOutline = {
   title: string;
   description: string;
+  totalDuration?: string;
   modules: AiModule[];
 };
 
-const MAX_AI_TEXT_CHARS = 4000;
+const MAX_AI_TEXT_CHARS = 6000;
 
 const summarizeTextForAi = (text: string) => {
   if (text.length <= MAX_AI_TEXT_CHARS) return text;
@@ -126,7 +140,7 @@ const generateCourseCopy = async (input: {
           role: "system",
           parts: [
             {
-              text: "You are generating a course title and description for a single-video course. Return only valid JSON with keys title and description.",
+              text: "You are generating a course title and description for a video course. Return only valid JSON with keys title and description.",
             },
           ],
         },
@@ -135,7 +149,7 @@ const generateCourseCopy = async (input: {
             role: "user",
             parts: [
               {
-                text: `Create a concise, marketable title (max 8 words) and a 1-2 sentence description. Use the audience and tone if provided. Data: ${JSON.stringify(
+                text: `Create a concise, marketable title (max 8 words) and a 2-3 sentence description. Use the audience and tone if provided. Data: ${JSON.stringify(
                   context,
                 )}`,
               },
@@ -168,6 +182,7 @@ const generateCourseCopy = async (input: {
   const outputText = getGeminiText(json);
   if (!outputText) return null;
   const parsed = extractJsonObject(outputText);
+  console.log(parsed)
   return parseAiCopy(parsed);
 };
 
@@ -177,46 +192,107 @@ const parseAiOutline = (value: unknown): AiCourseOutline | null => {
   const title = typeof record.title === "string" ? record.title.trim() : "";
   const description =
     typeof record.description === "string" ? record.description.trim() : "";
+  const totalDuration =
+    typeof record.totalDuration === "string" ? record.totalDuration.trim() : "";
   const modules = Array.isArray(record.modules) ? record.modules : [];
-  if (!title || !description || modules.length === 0) return null;
+
+  if (!title || !description || modules.length === 0) {
+    console.error("[parseAiOutline] Missing required fields:", { title: !!title, description: !!description, modulesCount: modules.length });
+    return null;
+  }
+
   const cleanedModules: AiModule[] = modules
-    .map((module: any) => {
+    .map((module: any, idx: number) => {
       const moduleTitle =
         typeof module?.title === "string" ? module.title.trim() : "";
       const moduleDescription =
         typeof module?.description === "string"
           ? module.description.trim()
           : "";
+      const estimatedTime =
+        typeof module?.estimatedTime === "string" ? module.estimatedTime.trim() : "";
       const lessons = Array.isArray(module?.lessons) ? module.lessons : [];
+
+      if (!moduleTitle || !moduleDescription) {
+        console.error(`[parseAiOutline] Module ${idx} missing title or description`);
+        return null;
+      }
+
       const cleanedLessons: AiLesson[] = lessons
-        .map((lesson: any) => {
+        .map((lesson: any, lessonIdx: number) => {
           const lessonTitle =
             typeof lesson?.title === "string" ? lesson.title.trim() : "";
           const lessonSummary =
             typeof lesson?.summary === "string" ? lesson.summary.trim() : "";
+          const videoScript =
+            typeof lesson?.videoScript === "string" ? lesson.videoScript.trim() : "";
+          const duration =
+            typeof lesson?.duration === "string" ? lesson.duration.trim() : "";
           const topics = Array.isArray(lesson?.topics)
             ? lesson.topics.filter((topic: any) => typeof topic === "string")
             : [];
-          if (!lessonTitle || !lessonSummary) return null;
+          const keyPoints = Array.isArray(lesson?.keyPoints)
+            ? lesson.keyPoints.filter((point: any) => typeof point === "string")
+            : [];
+
+          if (!lessonTitle || !lessonSummary) {
+            console.error(`[parseAiOutline] Lesson ${lessonIdx} in module ${idx} missing title or summary`);
+            return null;
+          }
+
+          // Parse quiz if present
+          let quiz = undefined;
+          if (lesson?.quiz && Array.isArray(lesson.quiz.questions)) {
+            quiz = {
+              questions: lesson.quiz.questions.map((q: any) => ({
+                question: typeof q?.question === "string" ? q.question : "",
+                options: Array.isArray(q?.options) ? q.options : [],
+                correctAnswer: typeof q?.correctAnswer === "string" ? q.correctAnswer : "",
+                explanation: typeof q?.explanation === "string" ? q.explanation : "",
+              })).filter((q: any) => q.question && q.correctAnswer),
+            };
+            if (quiz.questions.length === 0) quiz = undefined;
+          }
+
           return {
             title: lessonTitle,
             summary: lessonSummary,
             topics,
+            videoScript,
+            keyPoints,
+            duration,
+            quiz,
           };
         })
         .filter(Boolean) as AiLesson[];
-      if (!moduleTitle || !moduleDescription || cleanedLessons.length === 0) {
+
+      if (cleanedLessons.length === 0) {
+        console.error(`[parseAiOutline] Module ${idx} has no valid lessons`);
         return null;
       }
+
       return {
         title: moduleTitle,
         description: moduleDescription,
+        estimatedTime,
         lessons: cleanedLessons,
       };
     })
     .filter(Boolean) as AiModule[];
-  if (cleanedModules.length === 0) return null;
-  return { title, description, modules: cleanedModules };
+
+  if (cleanedModules.length === 0) {
+    console.error("[parseAiOutline] No valid modules parsed");
+    return null;
+  }
+
+  console.log(`[parseAiOutline] Successfully parsed ${cleanedModules.length} modules with ${cleanedModules.reduce((sum, m) => sum + m.lessons.length, 0)} total lessons`);
+
+  return {
+    title,
+    description,
+    totalDuration,
+    modules: cleanedModules
+  };
 };
 
 const generateCourseOutline = async (input: {
@@ -228,22 +304,63 @@ const generateCourseOutline = async (input: {
   links: string[];
   fileUrls: string[];
   maxChapters: number;
+  includeQuizzes: boolean;
 }): Promise<AiCourseOutline | null> => {
   const apiKey = process.env.GEMINI_AI_API;
-  if (!apiKey) return null;
+  if (!apiKey) {
+    console.error("[generateCourseOutline] No GEMINI_AI_API key found");
+    return null;
+  }
 
-  const model = process.env.GEMINI_MODEL ?? "gemini-1.0-pro";
+  const model = "gemini-3-flash-preview";
 
-  const context = {
-    audience: input.audience,
-    tone: input.tone,
-    videoLength: input.videoLength,
-    narrationVoice: input.narrationVoice,
-    links: input.links,
-    fileUrls: input.fileUrls,
-    maxChapters: input.maxChapters,
-    text: summarizeTextForAi(input.text),
-  };
+  const quizSection = input.includeQuizzes
+    ? `, "quiz": { "questions": [{"question": "string", "options": ["A", "B", "C", "D"], "correctAnswer": "A", "explanation": "string"}] }`
+    : ``;
+
+  const promptText = `You are a professional course designer. Create a complete video course outline.
+
+COURSE CONTENT:
+${input.text}
+
+CONFIGURATION:
+- Target Audience: ${input.audience || "general learners"}
+- Tone: ${input.tone || "professional"}
+- Video Length per Lesson: ${input.videoLength || "10-15 minutes"}
+- Narration Style: ${input.narrationVoice || "clear and engaging"}
+- Include Quizzes: ${input.includeQuizzes}
+
+REQUIREMENTS:
+3. Each lesson MUST include a detailed videoScript (300-500 words)
+4. Each lesson MUST include 4-6 keyPoints
+5. Each lesson MUST include 3-5 topics
+${input.includeQuizzes ? "6. Each lesson MUST include a quiz with 3-4 multiple choice questions" : ""}
+
+RETURN THIS EXACT JSON STRUCTURE:
+{
+  "title": "Course Title Here",
+  "description": "2-3 sentence course description",
+  "totalDuration": "Total time estimate (e.g., '3 hours')",
+  "modules": [
+    {
+      "title": "Module 1: Title",
+      "description": "What this module covers",
+      "estimatedTime": "Time estimate (e.g., '45 minutes')",
+      "lessons": [
+        {
+          "title": "Lesson 1.1: Title",
+          "summary": "What students will learn in this lesson",
+          "duration": "10 minutes",
+          "topics": ["Topic 1", "Topic 2", "Topic 3"],
+          "keyPoints": ["Key point 1", "Key point 2", "Key point 3", "Key point 4"],
+          "videoScript": "DETAILED 300-500 WORD SCRIPT: Start with a hook to grab attention. Introduce the topic clearly. Explain the main concepts with specific examples. Include demonstrations or case studies. Use analogies to make complex ideas simple. Summarize key takeaways. End with a call to action or next steps."${quizSection}
+        }
+      ]
+    }
+  ]
+}
+`;
+
 
   const response = await fetch(
     `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
@@ -253,28 +370,21 @@ const generateCourseOutline = async (input: {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        systemInstruction: {
-          role: "system",
-          parts: [
-            {
-              text: "Generate a structured course outline as JSON with keys: title, description, modules. Each module has title, description, lessons. Each lesson has title, summary, topics (array of strings).",
-            },
-          ],
-        },
         contents: [
           {
             role: "user",
             parts: [
               {
-                text: `Create a detailed outline based on the following data. Use the tone and audience when provided. Keep 3-6 modules and 2-4 lessons per module (respect maxChapters if > 0). Data: ${JSON.stringify(
-                  context,
-                )}`,
+                text: promptText,
               },
             ],
           },
         ],
         generationConfig: {
-          temperature: 0.4,
+          temperature: 0.7,
+          topK: 40,
+          topP: 0.95,
+          maxOutputTokens: 8192,
           responseMimeType: "application/json",
         },
       }),
@@ -283,35 +393,49 @@ const generateCourseOutline = async (input: {
 
   if (!response.ok) {
     const errorText = await response.text().catch(() => "");
-    console.error("[Gemini course outline]", response.status, errorText);
+    console.error("[Gemini course outline] HTTP Error:", response.status, errorText);
     return null;
   }
-  const json = await response.json().catch(() => null);
-  if (!json) return null;
 
+  const json = await response.json().catch(() => null);
+  if (!json) {
+    console.error("[Gemini course outline] Failed to parse JSON response");
+    return null;
+  }
+
+  // Try parsing the response
   const direct = parseAiOutline(json);
-  if (direct) return direct;
+  if (direct) {
+    console.log(`[generateCourseOutline] Successfully parsed direct response`);
+    return direct;
+  }
 
   const geminiJson = parseGeminiJson(json);
-  const geminiOutline = parseAiOutline(geminiJson);
-  if (geminiOutline) return geminiOutline;
+  if (geminiJson) {
+    const geminiOutline = parseAiOutline(geminiJson);
+    if (geminiOutline) {
+      console.log(`[generateCourseOutline] Successfully parsed from Gemini JSON`);
+      return geminiOutline;
+    }
+  }
 
   const outputText = getGeminiText(json);
-  if (!outputText) return null;
-  const parsed = extractJsonObject(outputText);
-  return parseAiOutline(parsed);
+  if (outputText) {
+    const parsed = extractJsonObject(outputText);
+    const result = parseAiOutline(parsed);
+    if (result) {
+      console.log(`[generateCourseOutline] Successfully parsed from output text`);
+      return result;
+    }
+  }
+
+  console.error("[generateCourseOutline] All parsing attempts failed");
+  console.log("Raw response:", JSON.stringify(json, null, 2));
+  return null;
 };
 
 export async function POST(request: Request) {
   try {
-    // const { userId } = await auth();
-    // if (!userId) {
-    //   return NextResponse.json(
-    //     { ok: false, error: "You must be signed in to create a course." },
-    //     { status: 401 },
-    //   );
-    // }
-
     const body = await request.json().catch(() => null);
     const rawText = typeof body?.text === "string" ? body.text : "";
     const trimmedText = rawText.trim();
@@ -340,17 +464,27 @@ export async function POST(request: Request) {
       typeof body?.thumbnailUrl === "string" ? body.thumbnailUrl.trim() : "";
 
     const audience =
-      typeof body?.config?.audience === "string" ? body.config.audience : "";
-    const tone = typeof body?.config?.tone === "string" ? body.config.tone : "";
+      typeof body?.config?.audience === "string" ? body.config.audience : "general learners";
+    const tone = typeof body?.config?.tone === "string" ? body.config.tone : "professional";
     const videoLength =
       typeof body?.config?.videoLength === "string"
         ? body.config.videoLength
-        : "3-5 min";
+        : "10-15 min";
     const narrationVoice =
       typeof body?.config?.narrationVoice === "string"
         ? body.config.narrationVoice
-        : "";
+        : "clear and engaging";
+    const includeQuizzes =
+      typeof body?.config?.includeQuizzes === "boolean"
+        ? body.config.includeQuizzes
+        : true;
+    const maxChapters =
+      typeof body?.config?.maxChapters === "number"
+        ? body.config.maxChapters
+        : 4; // Default to 4 modules
 
+    // Generate course copy (title and description)
+    console.log("[AI] Step 1: Generating course copy...");
     const aiCopy = await generateCourseCopy({
       text: trimmedText,
       audience,
@@ -361,6 +495,12 @@ export async function POST(request: Request) {
       fileUrls: Array.isArray(body?.fileUrls) ? body.fileUrls : [],
     });
 
+    if (aiCopy) {
+      console.log(`[AI] ✓ Generated title: "${aiCopy.title}"`);
+    }
+
+    // Generate detailed course outline with scripts
+    console.log("[AI] Step 2: Generating detailed course outline...");
     const aiOutline = await generateCourseOutline({
       text: trimmedText,
       audience,
@@ -369,10 +509,15 @@ export async function POST(request: Request) {
       narrationVoice,
       links: Array.isArray(body?.links) ? body.links : [],
       fileUrls: Array.isArray(body?.fileUrls) ? body.fileUrls : [],
-      maxChapters: Number.isFinite(body?.config?.maxChapters)
-        ? body.config.maxChapters
-        : 0,
+      maxChapters,
+      includeQuizzes,
     });
+
+    if (!aiOutline) {
+      console.error("[AI] Failed to generate course outline, using fallback");
+    } else {
+      console.log(`[AI] ✓ Generated ${aiOutline.modules.length} modules`);
+    }
 
     const courseTitle =
       aiOutline?.title || aiCopy?.title || providedTitle || titleFromText;
@@ -380,13 +525,7 @@ export async function POST(request: Request) {
       if (aiOutline?.description) return aiOutline.description;
       if (aiCopy?.description) return aiCopy.description;
       if (providedDescription) return providedDescription;
-      const suffixParts = [
-        audience ? `for ${audience}` : "",
-        tone ? `with a ${tone} tone` : "",
-      ].filter(Boolean);
-      return `A focused, single-video course${
-        suffixParts.length ? ` ${suffixParts.join(" ")}` : ""
-      }.`;
+      return `A comprehensive video course for ${audience} with a ${tone} tone.`;
     })();
 
     const courseId = crypto.randomUUID();
@@ -398,62 +537,243 @@ export async function POST(request: Request) {
       thumbnailUrl:
         providedThumbnail ||
         "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?auto=format&fit=crop&w=1200&q=80",
-      meta: { id: "123" },
+      meta: {
+        id: courseId,
+        // totalDuration: aiOutline?.totalDuration || "N/A",
+      },
     };
 
-    const buildVideo = (prompt: string) => ({
-      provider: "Sora AI",
-      status: "queued",
-      duration: videoLength,
+    const buildVideo = (prompt: string, script?: string, duration?: string) => ({
+      provider: "AI Video Generator",
+      status: "ready_for_generation",
+      duration: duration || videoLength,
       prompt,
-      url: "https://example.com/sora-ai/preview.mp4",
+      script: script || prompt,
+      url: null,
     });
 
-    const outlineModules = aiOutline?.modules?.map((module) => ({
-      id: crypto.randomUUID(),
-      title: module.title,
-      description: module.description,
-      lessons: module.lessons.map((lesson) => ({
-        id: crypto.randomUUID(),
-        title: lesson.title,
-        summary: lesson.summary,
-        topics: lesson.topics ?? [],
-        video: buildVideo(
-          `Create a lesson video for ${lesson.title} covering: ${
-            lesson.topics?.join(", ") || "key topics"
-          }.`,
-        ),
-      })),
-    }));
+    // Build modules from AI outline
+    let modules: any[] = [];
 
-    const fallbackModules = [
-      {
+    if (aiOutline?.modules && aiOutline.modules.length > 0) {
+      modules = aiOutline.modules.map((module, moduleIndex) => ({
         id: crypto.randomUUID(),
-        title: audience
-          ? `Module 1 · Core Concepts for ${audience}`
-          : "Module 1 · Core Concepts",
-        description: tone
-          ? `A single-module walkthrough delivered in a ${tone} tone.`
-          : "A single-module walkthrough of the key ideas.",
-        lessons: [
-          {
-            id: crypto.randomUUID(),
-            title: "Lesson 1 · Sora AI Overview",
-            summary: `A concise introduction with one generated video to explain the essentials${audience ? ` for ${audience}` : ""}.`,
-            topics: ["Overview", "Key concepts", "Next steps"],
-            video: buildVideo(
-              `Create a single video lesson in a ${tone || "clear"} tone${
-                narrationVoice
-                  ? ` with a ${narrationVoice} narration voice`
-                  : ""
-              }. Focus on the core ideas from the provided materials.`,
-            ),
-          },
-        ],
-      },
-    ];
-
-    const modules = outlineModules?.length ? outlineModules : fallbackModules;
+        moduleNumber: moduleIndex + 1,
+        title: module.title,
+        description: module.description,
+        estimatedTime: module.estimatedTime || "N/A",
+        lessons: module.lessons.map((lesson, lessonIndex) => ({
+          id: crypto.randomUUID(),
+          lessonNumber: lessonIndex + 1,
+          title: lesson.title,
+          summary: lesson.summary,
+          topics: lesson.topics ?? [],
+          keyPoints: lesson.keyPoints ?? [],
+          duration: lesson.duration || videoLength,
+          videoScript: lesson.videoScript || `Script for ${lesson.title}: ${lesson.summary}`,
+          video: buildVideo(
+            `Create a ${lesson.duration || videoLength} video lesson: ${lesson.title}. ${lesson.summary}`,
+            lesson.videoScript,
+            lesson.duration,
+          ),
+          quiz: lesson.quiz || null,
+        })),
+      }));
+    } else {
+      // Enhanced fallback with multiple modules
+      console.log("[AI] Using enhanced fallback with 4 modules");
+      modules = [
+        {
+          id: crypto.randomUUID(),
+          moduleNumber: 1,
+          title: `Module 1: Introduction & Fundamentals`,
+          description: `Get started with the core concepts and foundational knowledge.`,
+          estimatedTime: "45 minutes",
+          lessons: [
+            {
+              id: crypto.randomUUID(),
+              lessonNumber: 1,
+              title: "Lesson 1.1: Course Overview",
+              summary: "Introduction to the course structure and learning objectives",
+              topics: ["Course structure", "Learning objectives", "Prerequisites"],
+              keyPoints: ["Understand course goals", "Know what to expect", "Required background"],
+              duration: "15 minutes",
+              videoScript: "Welcome to this comprehensive course! In this opening lesson, we'll explore what you'll learn, how the course is structured, and the exciting journey ahead. We'll cover the key objectives and ensure you're ready to dive in.",
+              video: buildVideo("Course introduction and overview"),
+              quiz: includeQuizzes ? {
+                questions: [
+                  {
+                    question: "What is the main goal of this course?",
+                    options: ["Learn fundamentals", "Advanced only", "Unrelated", "None"],
+                    correctAnswer: "Learn fundamentals",
+                    explanation: "This course focuses on building strong fundamentals"
+                  }
+                ]
+              } : null,
+            },
+            {
+              id: crypto.randomUUID(),
+              lessonNumber: 2,
+              title: "Lesson 1.2: Core Concepts",
+              summary: "Deep dive into the essential concepts you need to master",
+              topics: ["Key terminology", "Basic principles", "Common patterns"],
+              keyPoints: ["Master key terms", "Understand principles", "Recognize patterns"],
+              duration: "15 minutes",
+              videoScript: "Now let's get into the core concepts. We'll break down complex ideas into simple, digestible parts. You'll learn the essential terminology and principles that form the foundation of everything else.",
+              video: buildVideo("Core concepts explanation"),
+              quiz: null,
+            },
+            {
+              id: crypto.randomUUID(),
+              lessonNumber: 3,
+              title: "Lesson 1.3: First Practical Example",
+              summary: "Apply what you've learned with a hands-on example",
+              topics: ["Practical application", "Step-by-step guide", "Common mistakes"],
+              keyPoints: ["Apply concepts", "Follow best practices", "Avoid pitfalls"],
+              duration: "15 minutes",
+              videoScript: "Theory is important, but practice makes perfect. In this lesson, we'll work through a real example together. You'll see how to apply the concepts we've learned and avoid common mistakes.",
+              video: buildVideo("First practical example walkthrough"),
+              quiz: null,
+            },
+          ],
+        },
+        {
+          id: crypto.randomUUID(),
+          moduleNumber: 2,
+          title: `Module 2: Building Your Skills`,
+          description: `Develop practical skills through guided exercises and examples.`,
+          estimatedTime: "60 minutes",
+          lessons: [
+            {
+              id: crypto.randomUUID(),
+              lessonNumber: 1,
+              title: "Lesson 2.1: Intermediate Techniques",
+              summary: "Level up with more advanced techniques and strategies",
+              topics: ["Advanced methods", "Optimization", "Best practices"],
+              keyPoints: ["Learn advanced techniques", "Optimize workflow", "Professional standards"],
+              duration: "20 minutes",
+              videoScript: "Ready to take it to the next level? In this lesson, we'll explore intermediate techniques that professionals use. You'll learn how to optimize your approach and work more efficiently.",
+              video: buildVideo("Intermediate techniques tutorial"),
+              quiz: null,
+            },
+            {
+              id: crypto.randomUUID(),
+              lessonNumber: 2,
+              title: "Lesson 2.2: Real-World Project",
+              summary: "Work on a realistic project that simulates real scenarios",
+              topics: ["Project planning", "Implementation", "Testing"],
+              keyPoints: ["Plan effectively", "Build systematically", "Test thoroughly"],
+              duration: "20 minutes",
+              videoScript: "Let's build something real! In this project-based lesson, you'll apply everything you've learned to create a complete solution. We'll go through planning, building, and testing together.",
+              video: buildVideo("Real-world project tutorial"),
+              quiz: null,
+            },
+            {
+              id: crypto.randomUUID(),
+              lessonNumber: 3,
+              title: "Lesson 2.3: Problem Solving",
+              summary: "Learn to troubleshoot and solve common challenges",
+              topics: ["Debugging", "Problem analysis", "Solutions"],
+              keyPoints: ["Identify issues", "Analyze problems", "Find solutions"],
+              duration: "20 minutes",
+              videoScript: "Every professional encounters problems. In this lesson, you'll learn systematic approaches to troubleshooting and problem-solving. We'll work through common challenges and their solutions.",
+              video: buildVideo("Problem solving strategies"),
+              quiz: null,
+            },
+          ],
+        },
+        {
+          id: crypto.randomUUID(),
+          moduleNumber: 3,
+          title: `Module 3: Advanced Applications`,
+          description: `Master advanced concepts and complex scenarios.`,
+          estimatedTime: "60 minutes",
+          lessons: [
+            {
+              id: crypto.randomUUID(),
+              lessonNumber: 1,
+              title: "Lesson 3.1: Advanced Patterns",
+              summary: "Explore sophisticated patterns used by experts",
+              topics: ["Design patterns", "Architecture", "Scalability"],
+              keyPoints: ["Master patterns", "Design systems", "Scale solutions"],
+              duration: "20 minutes",
+              videoScript: "Welcome to the advanced section! Here we'll explore patterns and architectures used in professional settings. You'll learn how to design scalable, maintainable solutions.",
+              video: buildVideo("Advanced patterns and architecture"),
+              quiz: null,
+            },
+            {
+              id: crypto.randomUUID(),
+              lessonNumber: 2,
+              title: "Lesson 3.2: Complex Scenarios",
+              summary: "Handle complex, multi-faceted challenges",
+              topics: ["Complex problems", "Integration", "Edge cases"],
+              keyPoints: ["Solve complex problems", "Integrate systems", "Handle edge cases"],
+              duration: "20 minutes",
+              videoScript: "Real-world scenarios are rarely simple. In this lesson, we'll tackle complex challenges that involve multiple components and considerations. You'll learn to think systematically about complicated problems.",
+              video: buildVideo("Complex scenario solutions"),
+              quiz: null,
+            },
+            {
+              id: crypto.randomUUID(),
+              lessonNumber: 3,
+              title: "Lesson 3.3: Performance & Optimization",
+              summary: "Optimize for speed, efficiency, and quality",
+              topics: ["Performance tuning", "Optimization", "Quality assurance"],
+              keyPoints: ["Measure performance", "Optimize effectively", "Ensure quality"],
+              duration: "20 minutes",
+              videoScript: "Good code works, great code performs. In this lesson, you'll learn how to measure, analyze, and optimize your solutions for peak performance and quality.",
+              video: buildVideo("Performance optimization guide"),
+              quiz: null,
+            },
+          ],
+        },
+        {
+          id: crypto.randomUUID(),
+          moduleNumber: 4,
+          title: `Module 4: Mastery & Next Steps`,
+          description: `Consolidate your knowledge and plan your continued learning journey.`,
+          estimatedTime: "45 minutes",
+          lessons: [
+            {
+              id: crypto.randomUUID(),
+              lessonNumber: 1,
+              title: "Lesson 4.1: Best Practices Review",
+              summary: "Comprehensive review of industry best practices",
+              topics: ["Professional standards", "Code quality", "Team collaboration"],
+              keyPoints: ["Follow standards", "Write quality code", "Work effectively"],
+              duration: "15 minutes",
+              videoScript: "Let's consolidate everything you've learned. In this lesson, we'll review industry best practices and professional standards. You'll learn what separates good from great in real-world applications.",
+              video: buildVideo("Best practices comprehensive review"),
+              quiz: null,
+            },
+            {
+              id: crypto.randomUUID(),
+              lessonNumber: 2,
+              title: "Lesson 4.2: Capstone Project",
+              summary: "Complete a comprehensive project showcasing your skills",
+              topics: ["End-to-end project", "Portfolio piece", "Presentation"],
+              keyPoints: ["Build complete solution", "Create portfolio", "Present work"],
+              duration: "15 minutes",
+              videoScript: "Time to showcase everything you've learned! In this capstone project, you'll create a complete, portfolio-worthy piece. We'll go through the entire process from concept to completion.",
+              video: buildVideo("Capstone project guide"),
+              quiz: null,
+            },
+            {
+              id: crypto.randomUUID(),
+              lessonNumber: 3,
+              title: "Lesson 4.3: Your Learning Path Forward",
+              summary: "Resources and guidance for continued growth",
+              topics: ["Next steps", "Resources", "Community"],
+              keyPoints: ["Continue learning", "Find resources", "Join community"],
+              duration: "15 minutes",
+              videoScript: "Congratulations on completing the course! But this is just the beginning. In this final lesson, we'll map out your continued learning journey, share valuable resources, and connect you with the community.",
+              video: buildVideo("Future learning path and resources"),
+              quiz: null,
+            },
+          ],
+        },
+      ];
+    }
 
     const course = {
       ...baseCourse,
@@ -463,16 +783,25 @@ export async function POST(request: Request) {
         links: Array.isArray(body?.links) ? body.links : [],
         fileUrls: Array.isArray(body?.fileUrls) ? body.fileUrls : [],
       },
+      config: {
+        audience,
+        tone,
+        videoLength,
+        narrationVoice,
+        includeQuizzes,
+        maxChapters,
+      },
     };
 
-    console.log(course);
+    const totalLessons = modules.reduce((sum, m) => sum + m.lessons.length, 0);
+    console.log(`[SUCCESS] Course generated with ${modules.length} modules and ${totalLessons} lessons`);
 
     return NextResponse.json({ ok: true, course });
 
   } catch (error: any) {
     console.error("[POST /api/create] Critical Failure:", error);
     return NextResponse.json(
-      { ok: false, error: error.message },
+      { ok: false, error: error.message || "Failed to create course" },
       { status: 500 },
     );
   }

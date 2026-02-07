@@ -232,14 +232,17 @@ export default function CoursePage() {
   const [feedbackRating, setFeedbackRating] = useState<number | null>(null);
   const [feedbackComment, setFeedbackComment] = useState("");
   const [feedbackMessage, setFeedbackMessage] = useState<string | null>(null);
-  const [isFeedbackOpen, setIsFeedbackOpen] = useState(true);
+  const [isFeedbackOpen, setIsFeedbackOpen] = useState(false);
 
   useEffect(() => {
     if (!courseId || typeof window === "undefined") return;
     const stored = sessionStorage.getItem(`course:${courseId}`);
-    if (!stored) return;
+    const fallbackStored = localStorage.getItem(`course:${courseId}`);
+    console.log(stored)
+    const resolved = stored || fallbackStored;
+    if (!resolved) return;
     try {
-      const parsed = JSON.parse(stored) as CourseDetails;
+      const parsed = JSON.parse(resolved) as CourseDetails;
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setCourse(parsed);
     } catch {
@@ -473,7 +476,7 @@ export default function CoursePage() {
               </div>
             </div>
 
-            <div className="rounded-2xl border border-slate-200/70 bg-white/90 p-5 text-sm shadow-[0_8px_30px_-16px_rgba(15,23,42,0.35)] dark:border-slate-800/80 dark:bg-slate-900/70">
+            <div className="rounded-2xl border border-slate-200/70 bg-white/90 p-5 text-sm shadow-[0_8px_30px_-16px_rgba(15,23,42,0.35)] dark:border-slate-800/80 dark:bg-slate-900/70 mb-40">
               <div className="flex items-center justify-between">
                 <h3 className="text-base font-semibold">Course feedback</h3>
                 <button
