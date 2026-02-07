@@ -87,9 +87,6 @@ export default async function CreateCourse() {
                               Upload files like PDFs, or docs.
                             </p>
                           </div>
-                          <span className="rounded-full bg-slate-100 px-2 py-1 text-[10px] font-medium text-slate-500 dark:bg-slate-800 dark:text-slate-300">
-                            Up to 5
-                          </span>
                         </div>
                         <div className="mt-4 flex flex-col items-center justify-center rounded-lg border border-dashed border-slate-300/80 bg-white/70 px-4 py-6 text-center text-xs text-slate-500 dark:border-slate-700/80 dark:bg-slate-950/40">
                           Drop PDFs here or
