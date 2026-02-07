@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import ScrollableFeed from "@/components/scrollable-feed";
 import {
   Select,
@@ -21,6 +22,7 @@ import { createCourse } from "@/actions/course";
 import type { CourseCreationData } from "@/types/global";
 
 export default function CourseCreatorForm() {
+  const router = useRouter();
   const [rawText, setRawText] = useState("");
   const [textError, setTextError] = useState<string | null>(null);
   const [serverError, setServerError] = useState<string | null>(null);
@@ -62,6 +64,16 @@ export default function CourseCreatorForm() {
         const result = await createCourse(payload);
         if (result && !result.ok) {
           setServerError(result.error);
+          return;
+        }
+        if (result?.course?.id) {
+          if (typeof window !== "undefined") {
+            sessionStorage.setItem(
+              `course:${result.course.id}`,
+              JSON.stringify(result.course),
+            );
+          }
+          router.push(`/courses/${result.course.id}`);
         }
       } catch {
         setServerError("Failed to create course. Try again.");

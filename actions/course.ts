@@ -2,8 +2,9 @@
 
 import { CourseCreationData } from "@/types/global";
 import { auth } from "@clerk/nextjs/server";
+import { headers } from "next/headers";
 import { extractPdfContent } from "@/lib/extractContent";
-import {extractUrls} from "@/lib/extractUrls";
+import { extractUrls } from "@/lib/extractUrls";
 
 export async function createCourse(
 	data: CourseCreationData,
@@ -30,8 +31,8 @@ export async function createCourse(
 		// Extract data from the file given
 		const fileData = await extractPdfContent(data.fileUrls?.[0] || "");
 
-    // Extract data from URLs
-    const urlsData = await extractUrls(data.links ?? []);
+		// Extract data from URLs
+		const urlsData = await extractUrls(data.links ?? []);
 
 		const payload = {
 			...data,
@@ -45,7 +46,30 @@ export async function createCourse(
 			},
 		};
 
-		console.log("[createCourse] payload", JSON.stringify(payload, null, 2));
+		const headerStore = await headers();
+		const origin =
+			headerStore.get("origin") ??
+			`${headerStore.get("x-forwarded-proto") ?? "http"}://${
+				headerStore.get("host") ?? "localhost:3000"
+			}`;
+
+		const response = await fetch(`${origin}/api/create`, {
+			method: "POST",
+			headers: { "Content-Type": "application/json" },
+			body: JSON.stringify(payload),
+		});
+
+		console.log("API response", { status: response.status, statusText: response.statusText });
+
+		if (!response.ok) {
+			const message = await response.json().catch(() => ({}));
+			return {
+				ok: false,
+				error: message?.error ?? "Failed to create course.",
+			};
+		}
+
+		return response.json();
 	} catch (error) {
 		console.error("[createCourse] failed", error);
 		return { ok: false, error: "Failed to create course. Try again." };

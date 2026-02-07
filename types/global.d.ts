@@ -17,3 +17,11 @@ export type CourseCreationData = {
   links: string[];
   config: Config;
 }
+
+export type Course = {
+  id: string;
+  title: string;
+  description: string;
+  thumbnailUrl: string;
+  meta: CourseMeta;
+}
