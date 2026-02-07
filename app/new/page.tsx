@@ -15,17 +15,12 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { HoverBorderGradient } from "@/components/ui/hover-border-gradient";
 import { PiSparkleThin } from "react-icons/pi";
 import UploadFileButton from "@/components/upload-files";
+import CourseLinks from "@/components/course-links";
 
 export default async function CreateCourse() {
   const { isAuthenticated } = await auth();
   if (!isAuthenticated) {
     redirect("/");
-  }
-
-  const links = [];
-
-  function handleAddLink(link: string) {
-    links.push(link);
   }
 
   return (
@@ -103,15 +98,7 @@ export default async function CreateCourse() {
                             Add articles, videos, or websites.
                           </p>
                         </div>
-                        <div className="mt-4 space-y-2">
-                          <input
-                            className="w-full rounded-lg border border-slate-200/80 bg-white/80 px-3 py-2 text-sm text-slate-700 shadow-sm outline-none placeholder:text-slate-400 focus:border-slate-300 dark:border-slate-700/80 dark:bg-slate-950/60 dark:text-slate-200"
-                            placeholder="https://"
-                          />
-                          <button className="w-full rounded-full border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 transition hover:border-slate-300 hover:bg-white dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200" >
-                            Add link
-                          </button>
-                        </div>
+                        <CourseLinks />
                       </div>
                     </div>
                   </div>
