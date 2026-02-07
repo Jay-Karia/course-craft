@@ -22,6 +22,7 @@ import type { CourseCreationData } from "@/types/global";
 
 export default function CourseCreatorForm() {
   const [rawText, setRawText] = useState("");
+  const [textError, setTextError] = useState<string | null>(null);
   const [links, setLinks] = useState<string[]>([]);
   const [fileUrls, setFileUrls] = useState<string[]>([]);
   const [audience, setAudience] = useState("");
@@ -41,6 +42,13 @@ export default function CourseCreatorForm() {
   }, [rawText]);
 
   const handleGenerate = () => {
+    if (!rawText.trim()) {
+      setTextError("Raw text is required.");
+      return;
+    }
+
+    setTextError(null);
+
     const payload: CourseCreationData = {
       text: rawText,
       fileUrls,
@@ -104,18 +112,19 @@ export default function CourseCreatorForm() {
                             Paste notes, transcripts, or outlines.
                           </p>
                         </div>
-                        <div className="flex items-center gap-2 text-[11px] font-medium text-slate-500 dark:text-slate-400">
-                          <span>{textStats.words} words</span>
-                          <span>•</span>
-                          <span>{textStats.chars} chars</span>
-                        </div>
                       </div>
                       <textarea
                         className="mt-4 h-32 w-full resize-none rounded-xl border border-slate-200/80 bg-white/80 p-3 text-sm text-slate-700 shadow-sm outline-none ring-0 placeholder:text-slate-400 focus:border-slate-300 dark:border-slate-700/80 dark:bg-slate-950/60 dark:text-slate-200"
                         placeholder="Paste raw notes or lesson ideas here..."
                         value={rawText}
                         onChange={(event) => setRawText(event.target.value)}
+                        required
                       />
+                      {textError ? (
+                        <p className="mt-2 text-xs font-medium text-rose-500">
+                          {textError}
+                        </p>
+                      ) : null}
                     </div>
 
                     <div className="grid gap-4 sm:grid-cols-2">
