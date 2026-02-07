@@ -12,7 +12,13 @@ import {
 } from "@/components/ui/resizable-navbar";
 import { useState } from "react";
 import { ThemeToggle } from "./theme-toggle";
-import {FcGoogle} from "react-icons/fc";
+import { FcGoogle } from "react-icons/fc";
+import {
+  SignedIn,
+  SignedOut,
+  SignInButton,
+  UserButton,
+} from "@clerk/nextjs";
 
 export default function Navbar() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -42,14 +48,20 @@ export default function Navbar() {
             <NavbarButton variant="invisible">
               <ThemeToggle />
             </NavbarButton>
-            <NavbarButton
-              variant="primary"
-              className="bg-gray-100 dark:bg-white dark:text-black flex items-center justify-center"
-              // onClick={signInWithGoogle}
-            >
-              <FcGoogle className="mr-2" size={20}/>
-              Sign in
-            </NavbarButton>
+            <SignedIn>
+              <UserButton />
+            </SignedIn>
+            <SignedOut>
+              <SignInButton>
+                <NavbarButton
+                  variant="primary"
+                  className="bg-gray-100 dark:bg-white dark:text-black flex items-center justify-center"
+                >
+                  <FcGoogle className="mr-2" size={20} />
+                  Sign in
+                </NavbarButton>
+              </SignInButton>
+            </SignedOut>
           </div>
         </NavBody>
 
@@ -82,11 +94,10 @@ export default function Navbar() {
             ))}
             <div className="flex w-full flex-col gap-4">
               <NavbarButton
-                // onClick={signInWithGoogle}
                 variant="primary"
                 className="w-full flex justify-center items-center"
               >
-                <FcGoogle className="mr-2" size={20}/>
+                <FcGoogle className="mr-2" size={20} />
                 Sign In
               </NavbarButton>
             </div>
