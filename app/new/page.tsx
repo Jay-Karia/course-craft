@@ -12,6 +12,8 @@ import {
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
+import { HoverBorderGradient } from "@/components/ui/hover-border-gradient";
+import { PiSparkleThin } from "react-icons/pi";
 
 export default async function CreateCourse() {
   const { isAuthenticated } = await auth();
@@ -111,7 +113,9 @@ export default async function CreateCourse() {
                     </div>
                   </div>
                 </div>
+              </section>
 
+              <aside className="space-y-6">
                 <div className="rounded-2xl border border-slate-200/70 bg-white/80 p-6 shadow-[0_8px_30px_-16px_rgba(15,23,42,0.35)] dark:border-slate-800/80 dark:bg-slate-900/70">
                   <div className="flex items-center justify-between">
                     <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
@@ -227,9 +231,6 @@ export default async function CreateCourse() {
                     </div>
                   </div>
                 </div>
-              </section>
-
-              <aside className="space-y-6">
                 <div className="rounded-2xl border border-slate-200/70 bg-white/80 p-6 shadow-[0_8px_30px_-16px_rgba(15,23,42,0.35)] dark:border-slate-800/80 dark:bg-slate-900/70">
                   <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
                     Ready to generate?
@@ -237,10 +238,16 @@ export default async function CreateCourse() {
                   <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
                     We will stitch your inputs into a full course in minutes.
                   </p>
-                  <div className="mt-6 space-y-3">
-                    <button className="w-full rounded-full bg-slate-900 px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-slate-800 dark:bg-white dark:text-slate-900">
-                      Generate course
-                    </button>
+                  <div className="mt-6 space-y-3 w-full ">
+                    <HoverBorderGradient
+                      containerClassName="rounded-full w-full "
+                      as="button"
+                      className="dark:bg-black bg-slate-100 text-black dark:text-white flex items-center space-x-2 w-full justify-center hover:-translate-y-0.5 transition-transform duration-300 hover:cursor-pointer"
+                    >
+                      <span className="flex gap-3 items-center">
+                        <PiSparkleThin size={25} /> Generate
+                      </span>
+                    </HoverBorderGradient>
                   </div>
                 </div>
               </aside>
