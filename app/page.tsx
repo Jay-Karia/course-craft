@@ -41,7 +41,8 @@ export default function Home() {
     }),
     [],
   );
-  const effectOptions = mounted && resolvedTheme === "light" ? lightEffectOptions : {};
+  const effectOptions =
+    mounted && resolvedTheme === "light" ? lightEffectOptions : {};
 
   if (isSignedIn) {
     return null;
