@@ -3,9 +3,13 @@
 import { useMemo, useState } from "react";
 import { Link2, X } from "lucide-react";
 
-export default function CourseLinks() {
+type CourseLinksProps = {
+  links: string[];
+  onChange: (links: string[]) => void;
+};
+
+export default function CourseLinks({ links, onChange }: CourseLinksProps) {
   const [linkInput, setLinkInput] = useState("");
-  const [links, setLinks] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
 
   const normalizedLinks = useMemo(() => {
@@ -36,12 +40,14 @@ export default function CourseLinks() {
       }
 
       const normalized = parsed.toString().replace(/\/$/, "");
-      if (links.some((link) => link.toLowerCase() === normalized.toLowerCase())) {
+      if (
+        links.some((link) => link.toLowerCase() === normalized.toLowerCase())
+      ) {
         setError("That link is already added.");
         return;
       }
 
-      setLinks((prev) => [normalized, ...prev]);
+      onChange([normalized, ...links]);
       setLinkInput("");
       setError(null);
     } catch {
@@ -50,7 +56,7 @@ export default function CourseLinks() {
   };
 
   const handleRemove = (linkToRemove: string) => {
-    setLinks((prev) => prev.filter((link) => link !== linkToRemove));
+    onChange(links.filter((link) => link !== linkToRemove));
   };
 
   const handleKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {

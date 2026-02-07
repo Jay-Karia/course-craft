@@ -241,7 +241,7 @@ export const NavbarLogo = () => {
         width={30}
         height={30}
       />
-      <span className="font-medium text-black dark:text-white">Kinetix</span>
+      <span className="font-medium text-black dark:text-white">Course Craft</span>
     </a>
   );
 };

@@ -4,7 +4,16 @@ import { UploadButton } from "@/lib/uploadthing";
 import { useState } from "react";
 import { twMerge } from "tailwind-merge";
 
-export default function UploadFileButton() {
+type UploadedFile = {
+  name: string;
+  url: string;
+};
+
+type UploadFileButtonProps = {
+  onUploaded?: (files: UploadedFile[]) => void;
+};
+
+export default function UploadFileButton({ onUploaded }: UploadFileButtonProps) {
   const [uploadedNames, setUploadedNames] = useState<string[]>([]);
 
   return (
@@ -14,10 +23,16 @@ export default function UploadFileButton() {
           endpoint="imageUploader"
           onClientUploadComplete={(res) => {
             if (res && res.length > 0) {
-              const names = res
-                .map((file) => file.name || file.key || "Untitled file")
-                .filter(Boolean) as string[];
-              setUploadedNames(names.slice(0, 1));
+              const cleaned = res
+                .map((file) => ({
+                  name: file.name || file.key || "Untitled file",
+                  url: file.url || file.ufsUrl || "",
+                }))
+                .filter((file) => Boolean(file.url));
+
+              const limited = cleaned.slice(0, 1);
+              setUploadedNames(limited.map((file) => file.name));
+              onUploaded?.(limited);
             }
           }}
           onUploadError={(error: Error) => {
