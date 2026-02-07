@@ -1,4 +1,5 @@
 import { PlusIcon } from "lucide-react";
+import Link from "next/link";
 
 export default function CreateCourse() {
   return (
@@ -13,9 +14,11 @@ export default function CreateCourse() {
           </h4>
         </div>
 
-        <div className="flex h-12 w-12 items-center justify-center rounded-full border border-slate-200/80 bg-slate-50 text-slate-700 shadow-sm transition group-hover:scale-105 group-hover:border-slate-300 group-hover:bg-white dark:border-slate-700/80 dark:bg-slate-900/60 dark:text-slate-200">
-          <PlusIcon className="h-5 w-5" />
-        </div>
+        <Link href="/new">
+          <div className="flex h-12 w-12 items-center justify-center rounded-full border border-slate-200/80 bg-slate-50 text-slate-700 shadow-sm transition group-hover:scale-105 group-hover:border-slate-300 group-hover:bg-white dark:border-slate-700/80 dark:bg-slate-900/60 dark:text-slate-200">
+            <PlusIcon className="h-5 w-5" />
+          </div>
+        </Link>
       </div>
     </div>
   );
