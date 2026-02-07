@@ -18,6 +18,9 @@ type ExtractedUrlBundle = {
 const normalizeText = (value: string) =>
   value.replace(/\s+\n/g, "\n").replace(/\n{3,}/g, "\n\n").trim();
 
+const MAX_URL_TEXT_CHARS = 800;
+const MAX_COMBINED_TEXT_CHARS = 3000;
+
 const stripTags = (html: string) =>
   html
     .replace(/<script[\s\S]*?<\/script>/gi, " ")
@@ -143,7 +146,10 @@ export async function extractUrls(urls: string[]): Promise<ExtractedUrlBundle> {
             });
 
             if (fallback.ok) {
-              const raw = normalizeText(await fallback.text()).slice(0, 3000);
+              const raw = normalizeText(await fallback.text()).slice(
+                0,
+                MAX_URL_TEXT_CHARS,
+              );
               const lines = raw.split("\n").filter(line => line.trim());
               const firstLine = lines[0] ?? "";
 
@@ -182,7 +188,7 @@ export async function extractUrls(urls: string[]): Promise<ExtractedUrlBundle> {
           description = extractMetaDescription(raw);
           const h1 = extractH1(raw);
           const mainContent = extractMainContent(raw);
-          const text = normalizeText(mainContent).slice(0, 3000);
+          const text = normalizeText(mainContent).slice(0, MAX_URL_TEXT_CHARS);
 
           // Combine with priority: title, h1, description, main content
           const parts = [
@@ -194,12 +200,15 @@ export async function extractUrls(urls: string[]): Promise<ExtractedUrlBundle> {
 
           combinedText = normalizeText(parts.join("\n\n"));
         } else if (contentType.includes("text/plain")) {
-          const snippet = normalizeText(raw).slice(0, 3000);
+          const snippet = normalizeText(raw).slice(0, MAX_URL_TEXT_CHARS);
           combinedText = snippet;
           title = snippet.split("\n")[0]?.slice(0, 150) ?? "";
         } else {
           // For other content types, try to extract what we can
-          const snippet = normalizeText(stripTags(raw)).slice(0, 3000);
+          const snippet = normalizeText(stripTags(raw)).slice(
+            0,
+            MAX_URL_TEXT_CHARS,
+          );
           combinedText = snippet;
         }
 
@@ -242,7 +251,7 @@ export async function extractUrls(urls: string[]): Promise<ExtractedUrlBundle> {
         return `Source: ${item.url}\n${item.title ? `Title: ${item.title}\n` : ""}${item.text}`;
       })
       .join("\n\n---\n\n"),
-  );
+  ).slice(0, MAX_COMBINED_TEXT_CHARS);
 
   return {
     combinedText,

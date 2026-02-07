@@ -29,11 +29,9 @@ export async function createCourse(
 
 		// Extract data from the file given
 		const fileData = await extractPdfContent(data.fileUrls?.[0] || "");
-		console.log("Extracted file data:", fileData);
 
     // Extract data from URLs
     const urlsData = await extractUrls(data.links ?? []);
-    console.log("Extracted URLs data:", urlsData);
 
 		const payload = {
 			...data,
