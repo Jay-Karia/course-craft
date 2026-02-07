@@ -71,6 +71,9 @@ export default function Navbar() {
             <NavbarLogo />
             <div className="flex items-center gap-4">
               <ThemeToggle className="border-none" />
+               <SignedIn>
+              <UserButton />
+            </SignedIn>
               <MobileNavToggle
                 isOpen={isMobileMenuOpen}
                 onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
@@ -93,13 +96,18 @@ export default function Navbar() {
               </a>
             ))}
             <div className="flex w-full flex-col gap-4">
-              <NavbarButton
-                variant="primary"
-                className="w-full flex justify-center items-center"
-              >
-                <FcGoogle className="mr-2" size={20} />
-                Sign In
-              </NavbarButton>
+
+            <SignedOut>
+              <SignInButton>
+                <NavbarButton
+                  variant="primary"
+                  className="bg-gray-100 dark:bg-white dark:text-black flex items-center justify-center"
+                >
+                  <FcGoogle className="mr-2" size={20} />
+                  Sign in
+                </NavbarButton>
+              </SignInButton>
+            </SignedOut>
             </div>
           </MobileNavMenu>
         </MobileNav>
