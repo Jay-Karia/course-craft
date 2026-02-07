@@ -215,8 +215,6 @@ export async function POST(request: Request) {
     })();
 
     const courseId = crypto.randomUUID();
-    const moduleId = crypto.randomUUID();
-    const lessonId = crypto.randomUUID();
 
     const baseCourse: Course = {
       id: courseId,
@@ -228,37 +226,86 @@ export async function POST(request: Request) {
       meta: { id: "123" },
     };
 
+    const buildVideo = (prompt: string) => ({
+      provider: "Sora AI",
+      status: "generated",
+      duration: videoLength,
+      prompt,
+      url: "https://example.com/sora-ai/preview.mp4",
+    });
+
+    const modules = [
+      {
+        id: crypto.randomUUID(),
+        title: audience
+          ? `Module 1 · Core Concepts for ${audience}`
+          : "Module 1 · Core Concepts",
+        description: tone
+          ? `A single-module walkthrough delivered in a ${tone} tone.`
+          : "A single-module walkthrough of the key ideas.",
+        lessons: [
+          {
+            id: crypto.randomUUID(),
+            title: "Lesson 1 · Sora AI Overview",
+            summary:
+              `A concise introduction with one generated video to explain the essentials${audience ? ` for ${audience}` : ""}.`,
+            video: buildVideo(
+              `Create a single video lesson in a ${tone || "clear"} tone${
+                narrationVoice ? ` with a ${narrationVoice} narration voice` : ""
+              }. Focus on the core ideas from the provided materials.`,
+            ),
+          },
+          {
+            id: crypto.randomUUID(),
+            title: "Lesson 2 · Key Terminology",
+            summary: "Define the essential vocabulary for the course.",
+            video: buildVideo("Explain key terms with simple visuals."),
+          },
+        ],
+      },
+      {
+        id: crypto.randomUUID(),
+        title: "Module 2 · Applied Practice",
+        description: "Hands-on walkthroughs and real examples.",
+        lessons: [
+          {
+            id: crypto.randomUUID(),
+            title: "Lesson 3 · Guided Demo",
+            summary: "Follow a step-by-step demonstration.",
+            video: buildVideo("Walk through a practical example."),
+          },
+          {
+            id: crypto.randomUUID(),
+            title: "Lesson 4 · Common Pitfalls",
+            summary: "Avoid mistakes and learn best practices.",
+            video: buildVideo("Highlight common pitfalls and fixes."),
+          },
+        ],
+      },
+      {
+        id: crypto.randomUUID(),
+        title: "Module 3 · Next Steps",
+        description: "Wrap up and plan what to learn next.",
+        lessons: [
+          {
+            id: crypto.randomUUID(),
+            title: "Lesson 5 · Recap",
+            summary: "Summarize the most important takeaways.",
+            video: buildVideo("Summarize the key points and takeaways."),
+          },
+          {
+            id: crypto.randomUUID(),
+            title: "Lesson 6 · Next Actions",
+            summary: "Outline the recommended next steps.",
+            video: buildVideo("Provide a roadmap for continuing learning."),
+          },
+        ],
+      },
+    ];
+
     const course = {
       ...baseCourse,
-      modules: [
-        {
-          id: moduleId,
-          title: audience
-            ? `Module 1 · Core Concepts for ${audience}`
-            : "Module 1 · Core Concepts",
-          description: tone
-            ? `A single-module walkthrough delivered in a ${tone} tone.`
-            : "A single-module walkthrough of the key ideas.",
-          lessons: [
-            {
-              id: lessonId,
-              title: "Lesson 1 · Sora AI Overview",
-              summary:
-                `A concise introduction with one generated video to explain the essentials${audience ? ` for ${audience}` : ""}.`,
-              video: {
-                provider: "Sora AI",
-                status: "generated",
-                duration: videoLength,
-                prompt:
-                  `Create a single video lesson in a ${tone || "clear"} tone${
-                    narrationVoice ? ` with a ${narrationVoice} narration voice` : ""
-                  }. Focus on the core ideas from the provided materials.`,
-                url: "https://example.com/sora-ai/preview.mp4",
-              },
-            },
-          ],
-        },
-      ],
+      modules,
       source: {
         textLength: trimmedText.length,
         links: Array.isArray(body?.links) ? body.links : [],

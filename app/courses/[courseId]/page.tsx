@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { useParams } from "next/navigation";
 
 type CourseVideo = {
@@ -34,6 +35,194 @@ type CourseDetails = {
   modules?: CourseModule[];
 };
 
+const buildFallbackModules = (courseTitle: string): CourseModule[] => {
+  const baseVideo: CourseVideo = {
+    provider: "Sora AI",
+    status: "queued",
+    duration: "3-5 min",
+    prompt: "Generate a concise explainer for this lesson.",
+    url: "https://example.com/sora-ai/preview.mp4",
+  };
+
+  return [
+    {
+      id: "module-1",
+      title: "Module 1 · Foundations",
+      description: `Core concepts and context for ${courseTitle}.`,
+      lessons: [
+        {
+          id: "lesson-1-1",
+          title: "Lesson 1 · Course overview",
+          summary: "Understand the course goals and outcomes.",
+          video: baseVideo,
+        },
+        {
+          id: "lesson-1-2",
+          title: "Lesson 2 · Key terms",
+          summary: "Define the essential vocabulary you will use.",
+          video: baseVideo,
+        },
+        {
+          id: "lesson-1-3",
+          title: "Lesson 3 · Workflow setup",
+          summary: "Prepare tools and resources for the course.",
+          video: baseVideo,
+        },
+      ],
+    },
+    {
+      id: "module-2",
+      title: "Module 2 · Applied practice",
+      description: "Hands-on walkthroughs and real examples.",
+      lessons: [
+        {
+          id: "lesson-2-1",
+          title: "Lesson 4 · Guided demo",
+          summary: "Follow a step-by-step demonstration.",
+          video: baseVideo,
+        },
+        {
+          id: "lesson-2-2",
+          title: "Lesson 5 · Common pitfalls",
+          summary: "Avoid mistakes and learn best practices.",
+          video: baseVideo,
+        },
+        {
+          id: "lesson-2-3",
+          title: "Lesson 6 · Quick exercise",
+          summary: "Apply the concepts with a short task.",
+          video: baseVideo,
+        },
+      ],
+    },
+    {
+      id: "module-3",
+      title: "Module 3 · Next steps",
+      description: "Wrap up and plan what to learn next.",
+      lessons: [
+        {
+          id: "lesson-3-1",
+          title: "Lesson 7 · Recap",
+          summary: "Summarize the most important takeaways.",
+          video: baseVideo,
+        },
+        {
+          id: "lesson-3-2",
+          title: "Lesson 8 · Advanced tips",
+          summary: "Explore optional enhancements and tips.",
+          video: baseVideo,
+        },
+        {
+          id: "lesson-3-3",
+          title: "Lesson 9 · Graduation",
+          summary: "Review your progress and completion checklist.",
+          video: baseVideo,
+        },
+      ],
+    },
+    {
+      id: "module-4",
+      title: "Module 4 · Advanced workflows",
+      description: "Speed, polish, and quality improvements.",
+      lessons: [
+        {
+          id: "lesson-4-1",
+          title: "Lesson 10 · Speed techniques",
+          summary: "Accelerate delivery without sacrificing clarity.",
+          video: baseVideo,
+        },
+        {
+          id: "lesson-4-2",
+          title: "Lesson 11 · Visual polish",
+          summary: "Improve visuals, pacing, and clarity.",
+          video: baseVideo,
+        },
+        {
+          id: "lesson-4-3",
+          title: "Lesson 12 · Quality checklist",
+          summary: "Validate the final output before sharing.",
+          video: baseVideo,
+        },
+      ],
+    },
+    {
+      id: "module-5",
+      title: "Module 5 · Capstone",
+      description: "Bring everything together in a final project.",
+      lessons: [
+        {
+          id: "lesson-5-1",
+          title: "Lesson 13 · Capstone brief",
+          summary: "Review the final project requirements.",
+          video: baseVideo,
+        },
+        {
+          id: "lesson-5-2",
+          title: "Lesson 14 · Build the draft",
+          summary: "Create the first version of your project.",
+          video: baseVideo,
+        },
+        {
+          id: "lesson-5-3",
+          title: "Lesson 15 · Final review",
+          summary: "Refine and polish your final submission.",
+          video: baseVideo,
+        },
+      ],
+    },
+    {
+      id: "module-6",
+      title: "Module 6 · Optimization",
+      description: "Refine, iterate, and optimize outputs.",
+      lessons: [
+        {
+          id: "lesson-6-1",
+          title: "Lesson 16 · Performance pass",
+          summary: "Optimize for speed and clarity.",
+          video: baseVideo,
+        },
+        {
+          id: "lesson-6-2",
+          title: "Lesson 17 · Quality benchmarks",
+          summary: "Compare against quality targets.",
+          video: baseVideo,
+        },
+        {
+          id: "lesson-6-3",
+          title: "Lesson 18 · Iteration loops",
+          summary: "Use feedback cycles to improve results.",
+          video: baseVideo,
+        },
+      ],
+    },
+    {
+      id: "module-7",
+      title: "Module 7 · Deployment",
+      description: "Publish, share, and measure outcomes.",
+      lessons: [
+        {
+          id: "lesson-7-1",
+          title: "Lesson 19 · Release prep",
+          summary: "Finalize assets before publishing.",
+          video: baseVideo,
+        },
+        {
+          id: "lesson-7-2",
+          title: "Lesson 20 · Distribution",
+          summary: "Plan where and how to share.",
+          video: baseVideo,
+        },
+        {
+          id: "lesson-7-3",
+          title: "Lesson 21 · Measure impact",
+          summary: "Track success metrics over time.",
+          video: baseVideo,
+        },
+      ],
+    },
+  ];
+};
+
 export default function CoursePage() {
   const params = useParams<{ courseId: string }>();
   const courseId = params?.courseId;
@@ -52,11 +241,37 @@ export default function CoursePage() {
     }
   }, [courseId]);
 
-  const modules = useMemo(() => course?.modules ?? [], [course]);
+  const modules = useMemo(() => {
+    if (!course) return [] as CourseModule[];
+    if (course.modules?.length) return course.modules;
+    return buildFallbackModules(course.title);
+  }, [course]);
+
+  const allLessons = useMemo(
+    () => modules.flatMap((module) => module.lessons),
+    [modules],
+  );
+
+  const [selectedLessonId, setSelectedLessonId] = useState<string | null>(null);
+  const effectiveSelectedLessonId = selectedLessonId ?? allLessons[0]?.id ?? null;
+
+  const selectedLesson = useMemo(
+    () => allLessons.find((lesson) => lesson.id === effectiveSelectedLessonId) ?? null,
+    [allLessons, effectiveSelectedLessonId],
+  );
+
+  const selectedModule = useMemo(() => {
+    if (!effectiveSelectedLessonId) return modules[0] ?? null;
+    return (
+      modules.find((module) =>
+        module.lessons.some((lesson) => lesson.id === effectiveSelectedLessonId),
+      ) ?? modules[0] ?? null
+    );
+  }, [modules, effectiveSelectedLessonId]);
 
   if (!courseId) {
     return (
-      <div className="min-h-screen bg-slate-50/70 px-6 py-16 text-slate-900 dark:bg-slate-950 dark:text-slate-100">
+      <div className="h-screen overflow-y-auto bg-slate-50/70 px-6 py-16 text-slate-900 dark:bg-slate-950 dark:text-slate-100">
         <div className="mx-auto w-full max-w-4xl space-y-6">
           <h1 className="text-2xl font-semibold">Course not found</h1>
           <Link className="text-sm text-indigo-500 hover:underline" href="/new">
@@ -69,7 +284,7 @@ export default function CoursePage() {
 
   if (!course) {
     return (
-      <div className="min-h-screen bg-slate-50/70 px-6 py-16 text-slate-900 dark:bg-slate-950 dark:text-slate-100">
+      <div className="h-screen overflow-y-auto bg-slate-50/70 px-6 py-16 text-slate-900 dark:bg-slate-950 dark:text-slate-100">
         <div className="mx-auto w-full max-w-4xl space-y-6">
           <h1 className="text-2xl font-semibold">Loading course…</h1>
           <p className="text-sm text-slate-600 dark:text-slate-400">
@@ -84,84 +299,161 @@ export default function CoursePage() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50/70 px-6 py-16 text-slate-900 dark:bg-slate-950 dark:text-slate-100">
-      <div className="mx-auto flex w-full max-w-4xl flex-col gap-8">
-        <header className="space-y-3">
-          <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
-            Course overview
-          </p>
-          <h1 className="text-3xl font-semibold tracking-tight">{course.title}</h1>
-          <p className="text-sm text-slate-600 dark:text-slate-400">
-            {course.description}
-          </p>
-        </header>
-
-        <div className="overflow-hidden rounded-2xl border border-slate-200/70 bg-white/90 shadow-[0_8px_30px_-16px_rgba(15,23,42,0.35)] dark:border-slate-800/80 dark:bg-slate-900/70">
-          <div className="aspect-[16/9] w-full overflow-hidden">
-            <img
-              alt={course.title}
-              className="h-full w-full object-cover"
-              src={course.thumbnailUrl}
-            />
-          </div>
-          <div className="p-6">
-            <h2 className="text-lg font-semibold">Modules & lessons</h2>
-            <div className="mt-4 space-y-4">
-              {modules.length === 0 ? (
-                <p className="text-sm text-slate-600 dark:text-slate-400">
-                  No modules available for this course yet.
-                </p>
-              ) : (
-                modules.map((module) => (
-                  <div
-                    key={module.id}
-                    className="rounded-xl border border-slate-200/70 bg-white/80 p-4 dark:border-slate-800/80 dark:bg-slate-950/40"
-                  >
-                    <h3 className="text-base font-semibold">{module.title}</h3>
-                    <p className="text-xs text-slate-600 dark:text-slate-400">
-                      {module.description}
-                    </p>
-                    <div className="mt-3 space-y-3">
-                      {module.lessons.map((lesson) => (
-                        <div
-                          key={lesson.id}
-                          className="rounded-lg border border-slate-200/70 bg-white/90 p-3 text-sm dark:border-slate-800/80 dark:bg-slate-900/60"
-                        >
-                          <div className="flex items-center justify-between">
-                            <div>
-                              <p className="font-semibold">{lesson.title}</p>
-                              <p className="text-xs text-slate-600 dark:text-slate-400">
-                                {lesson.summary}
-                              </p>
-                            </div>
-                          </div>
-                          <div className="mt-3 rounded-lg border border-dashed border-slate-200/70 bg-slate-50/60 p-3 text-xs text-slate-600 dark:border-slate-800/80 dark:bg-slate-900/40 dark:text-slate-300">
-                            <div className="flex flex-wrap items-center gap-2">
-                              <span className="rounded-full bg-indigo-100 px-2 py-0.5 text-xs font-semibold text-indigo-700 dark:bg-indigo-500/20 dark:text-indigo-200">
-                                {lesson.video.provider}
-                              </span>
-                              <span>Duration: {lesson.video.duration}</span>
-                              <span>Status: {lesson.video.status}</span>
-                            </div>
-                            <p className="mt-2">Prompt: {lesson.video.prompt}</p>
-                            <p className="mt-1">
-                              Video URL: {lesson.video.url}
-                            </p>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                ))
-              )}
+    <div className="h-screen overflow-y-auto bg-slate-50/70 px-6 py-16 text-slate-900 dark:bg-slate-950 dark:text-slate-100">
+      <div className="mx-auto flex w-full max-w-6xl flex-col gap-8">
+        <header className="space-y-4">
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                Course workspace
+              </p>
+              <h1 className="text-3xl font-semibold tracking-tight">
+                {course.title}
+              </h1>
+              <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
+                {course.description}
+              </p>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <span className="rounded-full border border-slate-200/70 bg-white/80 px-3 py-1 text-xs font-semibold text-slate-700 dark:border-slate-700/70 dark:bg-slate-900/60 dark:text-slate-200">
+                {modules.length} modules
+              </span>
+              <span className="rounded-full border border-slate-200/70 bg-white/80 px-3 py-1 text-xs font-semibold text-slate-700 dark:border-slate-700/70 dark:bg-slate-900/60 dark:text-slate-200">
+                {allLessons.length} lessons
+              </span>
             </div>
           </div>
-        </div>
+        </header>
 
-        <div>
-          <Link className="text-sm text-indigo-500 hover:underline" href="/new">
-            Create another course
-          </Link>
+        <div className="grid gap-8 lg:grid-cols-[2fr_1fr]">
+          <section className="space-y-6">
+            <div className="overflow-hidden rounded-2xl border border-slate-200/70 bg-white/90 shadow-[0_10px_40px_-20px_rgba(15,23,42,0.35)] dark:border-slate-800/80 dark:bg-slate-900/70">
+              <div className="aspect-video w-full overflow-hidden bg-slate-100 dark:bg-slate-800">
+                <div className="relative flex h-full w-full items-center justify-center">
+                  <Image
+                    alt={course.title}
+                    className="absolute inset-0 h-full w-full object-cover opacity-25"
+                    fill
+                    src={course.thumbnailUrl}
+                  />
+                  <div className="relative z-10 flex flex-col items-center gap-3 text-center">
+                    <div className="flex h-14 w-14 items-center justify-center rounded-full bg-white/90 text-slate-900 shadow-lg dark:bg-slate-950/80 dark:text-slate-100">
+                      <svg
+                        aria-hidden="true"
+                        className="h-6 w-6"
+                        fill="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path d="M8 5v14l11-7z" />
+                      </svg>
+                    </div>
+                    <div>
+                      <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                        Video placeholder
+                      </p>
+                      <p className="text-sm font-semibold">
+                        {selectedLesson?.title ?? "Select a lesson"}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div className="p-6">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                      Now playing
+                    </p>
+                    <h2 className="text-lg font-semibold">
+                      {selectedLesson?.title ?? "Pick a lesson"}
+                    </h2>
+                    <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
+                      {selectedLesson?.summary ??
+                        "Choose a lesson from the syllabus to preview its video."}
+                    </p>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    <span className="rounded-full bg-indigo-100 px-2 py-0.5 text-xs font-semibold text-indigo-700 dark:bg-indigo-500/20 dark:text-indigo-200">
+                      {selectedLesson?.video.provider ?? "Sora AI"}
+                    </span>
+                    <span className="rounded-full border border-slate-200/70 bg-white/80 px-2 py-0.5 text-xs font-semibold text-slate-700 dark:border-slate-700/70 dark:bg-slate-900/60 dark:text-slate-200">
+                      {selectedLesson?.video.duration ?? "3-5 min"}
+                    </span>
+                    <span className="rounded-full border border-slate-200/70 bg-white/80 px-2 py-0.5 text-xs font-semibold text-slate-700 dark:border-slate-700/70 dark:bg-slate-900/60 dark:text-slate-200">
+                      {selectedLesson?.video.status ?? "queued"}
+                    </span>
+                  </div>
+                </div>
+                <div className="mt-4 rounded-xl border border-dashed border-slate-200/70 bg-slate-50/60 p-4 text-xs text-slate-600 dark:border-slate-800/80 dark:bg-slate-900/40 dark:text-slate-300">
+                  <p className="font-semibold text-slate-700 dark:text-slate-200">
+                    Video prompt
+                  </p>
+                  <p className="mt-2">
+                    {selectedLesson?.video.prompt ??
+                      "Video prompt will appear here once generated."}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+          </section>
+
+          <aside className="space-y-4">
+            <div className="rounded-2xl border border-slate-200/70 bg-white/90 p-5 shadow-[0_8px_30px_-16px_rgba(15,23,42,0.35)] dark:border-slate-800/80 dark:bg-slate-900/70">
+              <div className="flex items-center justify-between">
+                <h3 className="text-base font-semibold">Syllabus</h3>
+                <span className="text-xs text-slate-500 dark:text-slate-400">
+                  {allLessons.length} lessons
+                </span>
+              </div>
+              <div className="mt-4 space-y-4">
+                {modules.map((module, index) => (
+                  <div key={module.id} className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                          Module {index + 1}
+                        </p>
+                        <p className="text-sm font-semibold">{module.title}</p>
+                      </div>
+                      <span className="rounded-full border border-slate-200/70 bg-white/80 px-2 py-0.5 text-xs font-semibold text-slate-700 dark:border-slate-700/70 dark:bg-slate-900/60 dark:text-slate-200">
+                        {module.lessons.length} lessons
+                      </span>
+                    </div>
+                    <div className="space-y-2">
+                      {module.lessons.map((lesson, lessonIndex) => {
+                        const isSelected = lesson.id === effectiveSelectedLessonId;
+                        return (
+                          <button
+                            key={lesson.id}
+                            className={`flex w-full flex-col gap-1 rounded-xl border px-3 py-2 text-left text-xs transition ${
+                              isSelected
+                                ? "border-indigo-400 bg-indigo-50/80 text-indigo-900 dark:border-indigo-400/70 dark:bg-indigo-500/10 dark:text-indigo-100"
+                                : "border-slate-200/70 bg-white/80 text-slate-700 hover:border-slate-300 dark:border-slate-800/80 dark:bg-slate-950/40 dark:text-slate-200"
+                            }`}
+                            onClick={() => setSelectedLessonId(lesson.id)}
+                            type="button"
+                          >
+                            <div className="flex items-center justify-between">
+                              <span className="font-semibold">
+                                {lessonIndex + 1}. {lesson.title}
+                              </span>
+                              <span className="text-[10px] text-slate-500 dark:text-slate-400">
+                                {lesson.video.duration}
+                              </span>
+                            </div>
+                            <span className="text-[11px] text-slate-500 dark:text-slate-400">
+                              {lesson.summary}
+                            </span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </aside>
         </div>
       </div>
     </div>
