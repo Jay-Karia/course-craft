@@ -1,5 +1,4 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { auth } from "@clerk/nextjs/server";
 import { NextResponse } from "next/server";
 import { Course } from "@/types/global";
 
@@ -8,6 +7,24 @@ export const runtime = "nodejs";
 type AiCourseCopy = {
   title: string;
   description: string;
+};
+
+type AiLesson = {
+  title: string;
+  summary: string;
+  topics: string[];
+};
+
+type AiModule = {
+  title: string;
+  description: string;
+  lessons: AiLesson[];
+};
+
+type AiCourseOutline = {
+  title: string;
+  description: string;
+  modules: AiModule[];
 };
 
 const MAX_AI_TEXT_CHARS = 4000;
@@ -82,10 +99,10 @@ const generateCourseCopy = async (input: {
   links: string[];
   fileUrls: string[];
 }): Promise<AiCourseCopy | null> => {
-  const apiKey = process.env.GEMINI_API_KEY;
+  const apiKey = process.env.GEMINI_AI_API;
   if (!apiKey) return null;
 
-  const model = process.env.GEMINI_MODEL ?? "gemini-1.5-flash";
+  const model = process.env.GEMINI_MODEL ?? "gemini-3-flash-preview";
 
   const context = {
     audience: input.audience,
@@ -133,7 +150,11 @@ const generateCourseCopy = async (input: {
     },
   );
 
-  if (!response.ok) return null;
+  if (!response.ok) {
+    const errorText = await response.text().catch(() => "");
+    console.error("[Gemini course copy]", response.status, errorText);
+    return null;
+  }
   const json = await response.json().catch(() => null);
   if (!json) return null;
 
@@ -148,6 +169,137 @@ const generateCourseCopy = async (input: {
   if (!outputText) return null;
   const parsed = extractJsonObject(outputText);
   return parseAiCopy(parsed);
+};
+
+const parseAiOutline = (value: unknown): AiCourseOutline | null => {
+  if (!value || typeof value !== "object") return null;
+  const record = value as Record<string, unknown>;
+  const title = typeof record.title === "string" ? record.title.trim() : "";
+  const description =
+    typeof record.description === "string" ? record.description.trim() : "";
+  const modules = Array.isArray(record.modules) ? record.modules : [];
+  if (!title || !description || modules.length === 0) return null;
+  const cleanedModules: AiModule[] = modules
+    .map((module: any) => {
+      const moduleTitle =
+        typeof module?.title === "string" ? module.title.trim() : "";
+      const moduleDescription =
+        typeof module?.description === "string"
+          ? module.description.trim()
+          : "";
+      const lessons = Array.isArray(module?.lessons) ? module.lessons : [];
+      const cleanedLessons: AiLesson[] = lessons
+        .map((lesson: any) => {
+          const lessonTitle =
+            typeof lesson?.title === "string" ? lesson.title.trim() : "";
+          const lessonSummary =
+            typeof lesson?.summary === "string" ? lesson.summary.trim() : "";
+          const topics = Array.isArray(lesson?.topics)
+            ? lesson.topics.filter((topic: any) => typeof topic === "string")
+            : [];
+          if (!lessonTitle || !lessonSummary) return null;
+          return {
+            title: lessonTitle,
+            summary: lessonSummary,
+            topics,
+          };
+        })
+        .filter(Boolean) as AiLesson[];
+      if (!moduleTitle || !moduleDescription || cleanedLessons.length === 0) {
+        return null;
+      }
+      return {
+        title: moduleTitle,
+        description: moduleDescription,
+        lessons: cleanedLessons,
+      };
+    })
+    .filter(Boolean) as AiModule[];
+  if (cleanedModules.length === 0) return null;
+  return { title, description, modules: cleanedModules };
+};
+
+const generateCourseOutline = async (input: {
+  text: string;
+  audience: string;
+  tone: string;
+  videoLength: string;
+  narrationVoice: string;
+  links: string[];
+  fileUrls: string[];
+  maxChapters: number;
+}): Promise<AiCourseOutline | null> => {
+  const apiKey = process.env.GEMINI_AI_API;
+  if (!apiKey) return null;
+
+  const model = process.env.GEMINI_MODEL ?? "gemini-1.0-pro";
+
+  const context = {
+    audience: input.audience,
+    tone: input.tone,
+    videoLength: input.videoLength,
+    narrationVoice: input.narrationVoice,
+    links: input.links,
+    fileUrls: input.fileUrls,
+    maxChapters: input.maxChapters,
+    text: summarizeTextForAi(input.text),
+  };
+
+  const response = await fetch(
+    `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        systemInstruction: {
+          role: "system",
+          parts: [
+            {
+              text: "Generate a structured course outline as JSON with keys: title, description, modules. Each module has title, description, lessons. Each lesson has title, summary, topics (array of strings).",
+            },
+          ],
+        },
+        contents: [
+          {
+            role: "user",
+            parts: [
+              {
+                text: `Create a detailed outline based on the following data. Use the tone and audience when provided. Keep 3-6 modules and 2-4 lessons per module (respect maxChapters if > 0). Data: ${JSON.stringify(
+                  context,
+                )}`,
+              },
+            ],
+          },
+        ],
+        generationConfig: {
+          temperature: 0.4,
+          responseMimeType: "application/json",
+        },
+      }),
+    },
+  );
+
+  if (!response.ok) {
+    const errorText = await response.text().catch(() => "");
+    console.error("[Gemini course outline]", response.status, errorText);
+    return null;
+  }
+  const json = await response.json().catch(() => null);
+  if (!json) return null;
+
+  const direct = parseAiOutline(json);
+  if (direct) return direct;
+
+  const geminiJson = parseGeminiJson(json);
+  const geminiOutline = parseAiOutline(geminiJson);
+  if (geminiOutline) return geminiOutline;
+
+  const outputText = getGeminiText(json);
+  if (!outputText) return null;
+  const parsed = extractJsonObject(outputText);
+  return parseAiOutline(parsed);
 };
 
 export async function POST(request: Request) {
@@ -209,8 +361,23 @@ export async function POST(request: Request) {
       fileUrls: Array.isArray(body?.fileUrls) ? body.fileUrls : [],
     });
 
-    const courseTitle = aiCopy?.title || providedTitle || titleFromText;
+    const aiOutline = await generateCourseOutline({
+      text: trimmedText,
+      audience,
+      tone,
+      videoLength,
+      narrationVoice,
+      links: Array.isArray(body?.links) ? body.links : [],
+      fileUrls: Array.isArray(body?.fileUrls) ? body.fileUrls : [],
+      maxChapters: Number.isFinite(body?.config?.maxChapters)
+        ? body.config.maxChapters
+        : 0,
+    });
+
+    const courseTitle =
+      aiOutline?.title || aiCopy?.title || providedTitle || titleFromText;
     const courseDescription = (() => {
+      if (aiOutline?.description) return aiOutline.description;
       if (aiCopy?.description) return aiCopy.description;
       if (providedDescription) return providedDescription;
       const suffixParts = [
@@ -236,13 +403,30 @@ export async function POST(request: Request) {
 
     const buildVideo = (prompt: string) => ({
       provider: "Sora AI",
-      status: "generated",
+      status: "queued",
       duration: videoLength,
       prompt,
       url: "https://example.com/sora-ai/preview.mp4",
     });
 
-    const modules = [
+    const outlineModules = aiOutline?.modules?.map((module) => ({
+      id: crypto.randomUUID(),
+      title: module.title,
+      description: module.description,
+      lessons: module.lessons.map((lesson) => ({
+        id: crypto.randomUUID(),
+        title: lesson.title,
+        summary: lesson.summary,
+        topics: lesson.topics ?? [],
+        video: buildVideo(
+          `Create a lesson video for ${lesson.title} covering: ${
+            lesson.topics?.join(", ") || "key topics"
+          }.`,
+        ),
+      })),
+    }));
+
+    const fallbackModules = [
       {
         id: crypto.randomUUID(),
         title: audience
@@ -256,6 +440,7 @@ export async function POST(request: Request) {
             id: crypto.randomUUID(),
             title: "Lesson 1 · Sora AI Overview",
             summary: `A concise introduction with one generated video to explain the essentials${audience ? ` for ${audience}` : ""}.`,
+            topics: ["Overview", "Key concepts", "Next steps"],
             video: buildVideo(
               `Create a single video lesson in a ${tone || "clear"} tone${
                 narrationVoice
@@ -264,53 +449,11 @@ export async function POST(request: Request) {
               }. Focus on the core ideas from the provided materials.`,
             ),
           },
-          {
-            id: crypto.randomUUID(),
-            title: "Lesson 2 · Key Terminology",
-            summary: "Define the essential vocabulary for the course.",
-            video: buildVideo("Explain key terms with simple visuals."),
-          },
-        ],
-      },
-      {
-        id: crypto.randomUUID(),
-        title: "Module 2 · Applied Practice",
-        description: "Hands-on walkthroughs and real examples.",
-        lessons: [
-          {
-            id: crypto.randomUUID(),
-            title: "Lesson 3 · Guided Demo",
-            summary: "Follow a step-by-step demonstration.",
-            video: buildVideo("Walk through a practical example."),
-          },
-          {
-            id: crypto.randomUUID(),
-            title: "Lesson 4 · Common Pitfalls",
-            summary: "Avoid mistakes and learn best practices.",
-            video: buildVideo("Highlight common pitfalls and fixes."),
-          },
-        ],
-      },
-      {
-        id: crypto.randomUUID(),
-        title: "Module 3 · Next Steps",
-        description: "Wrap up and plan what to learn next.",
-        lessons: [
-          {
-            id: crypto.randomUUID(),
-            title: "Lesson 5 · Recap",
-            summary: "Summarize the most important takeaways.",
-            video: buildVideo("Summarize the key points and takeaways."),
-          },
-          {
-            id: crypto.randomUUID(),
-            title: "Lesson 6 · Next Actions",
-            summary: "Outline the recommended next steps.",
-            video: buildVideo("Provide a roadmap for continuing learning."),
-          },
         ],
       },
     ];
+
+    const modules = outlineModules?.length ? outlineModules : fallbackModules;
 
     const course = {
       ...baseCourse,
@@ -326,7 +469,6 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ ok: true, course });
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (error: any) {
     console.error("[POST /api/create] Critical Failure:", error);
     return NextResponse.json(
