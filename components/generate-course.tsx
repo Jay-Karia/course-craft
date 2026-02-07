@@ -3,7 +3,7 @@
 import { PiSparkleThin } from "react-icons/pi";
 import { HoverBorderGradient } from "./ui/hover-border-gradient";
 import { CourseCreationData } from "@/types/global";
-import {createCourse} from "@/actions/course";
+import { createCourse } from "@/actions/course";
 
 export default function GenerateCourseButton({
   courseData,

@@ -229,6 +229,10 @@ export default function CoursePage() {
   const params = useParams<{ courseId: string }>();
   const courseId = params?.courseId;
   const [course, setCourse] = useState<CourseDetails | null>(null);
+  const [feedbackRating, setFeedbackRating] = useState<number | null>(null);
+  const [feedbackComment, setFeedbackComment] = useState("");
+  const [feedbackMessage, setFeedbackMessage] = useState<string | null>(null);
+  const [isFeedbackOpen, setIsFeedbackOpen] = useState(true);
 
   useEffect(() => {
     if (!courseId || typeof window === "undefined") return;
@@ -255,23 +259,34 @@ export default function CoursePage() {
   );
 
   const [selectedLessonId, setSelectedLessonId] = useState<string | null>(null);
-  const effectiveSelectedLessonId = selectedLessonId ?? allLessons[0]?.id ?? null;
+  const effectiveSelectedLessonId =
+    selectedLessonId ?? allLessons[0]?.id ?? null;
 
   const selectedLesson = useMemo(
-    () => allLessons.find((lesson) => lesson.id === effectiveSelectedLessonId) ?? null,
+    () =>
+      allLessons.find((lesson) => lesson.id === effectiveSelectedLessonId) ??
+      null,
     [allLessons, effectiveSelectedLessonId],
   );
 
-  const selectedModule = useMemo(() => {
-    if (!effectiveSelectedLessonId) return modules[0] ?? null;
-    return (
-      modules.find((module) =>
-        module.lessons.some((lesson) => lesson.id === effectiveSelectedLessonId),
-      ) ?? modules[0] ?? null
-    );
-  }, [modules, effectiveSelectedLessonId]);
+  const completedLessonIds = useMemo(
+    () =>
+      new Set(
+        allLessons
+          .slice(0, Math.min(4, allLessons.length))
+          .map((lesson) => lesson.id),
+      ),
+    [allLessons],
+  );
+
+  const isLessonCompleted = (lessonId?: string | null) =>
+    Boolean(lessonId && completedLessonIds.has(lessonId));
 
   const videoSrc = APPWRITE_VIDEO_URL;
+
+  const handleSubmitFeedback = () => {
+    setFeedbackMessage("Thanks! Feedback saved locally for now (placeholder).");
+  };
 
   if (!courseId) {
     return (
@@ -338,10 +353,7 @@ export default function CoursePage() {
                   controls
                   preload="metadata"
                 >
-                  <source
-                    src={videoSrc}
-                    type="video/mp4"
-                  />
+                  <source src={videoSrc} type="video/mp4" />
                 </video>
               </div>
               <div className="p-6">
@@ -368,6 +380,17 @@ export default function CoursePage() {
                     <span className="rounded-full border border-slate-200/70 bg-white/80 px-2 py-0.5 text-xs font-semibold text-slate-700 dark:border-slate-700/70 dark:bg-slate-900/60 dark:text-slate-200">
                       {selectedLesson?.video.status ?? "queued"}
                     </span>
+                    <span
+                      className={`rounded-full px-2 py-0.5 text-xs font-semibold ${
+                        isLessonCompleted(selectedLesson?.id)
+                          ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-200"
+                          : "bg-slate-100 text-slate-600 dark:bg-slate-800/60 dark:text-slate-300"
+                      }`}
+                    >
+                      {isLessonCompleted(selectedLesson?.id)
+                        ? "Completed"
+                        : "Not started"}
+                    </span>
                   </div>
                 </div>
                 <div className="mt-4 rounded-xl border border-dashed border-slate-200/70 bg-slate-50/60 p-4 text-xs text-slate-600 dark:border-slate-800/80 dark:bg-slate-900/40 dark:text-slate-300">
@@ -381,7 +404,6 @@ export default function CoursePage() {
                 </div>
               </div>
             </div>
-
           </section>
 
           <aside className="space-y-4">
@@ -408,7 +430,9 @@ export default function CoursePage() {
                     </div>
                     <div className="space-y-2">
                       {module.lessons.map((lesson, lessonIndex) => {
-                        const isSelected = lesson.id === effectiveSelectedLessonId;
+                        const isSelected =
+                          lesson.id === effectiveSelectedLessonId;
+                        const completed = isLessonCompleted(lesson.id);
                         return (
                           <button
                             key={lesson.id}
@@ -424,8 +448,17 @@ export default function CoursePage() {
                               <span className="font-semibold">
                                 {lessonIndex + 1}. {lesson.title}
                               </span>
-                              <span className="text-[10px] text-slate-500 dark:text-slate-400">
-                                {lesson.video.duration}
+                              <span className="flex items-center gap-2 text-[10px] text-slate-500 dark:text-slate-400">
+                                <span>{lesson.video.duration}</span>
+                                <span
+                                  className={`rounded-full px-1.5 py-0.5 text-[9px] font-semibold ${
+                                    completed
+                                      ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-200"
+                                      : "bg-slate-100 text-slate-600 dark:bg-slate-800/60 dark:text-slate-300"
+                                  }`}
+                                >
+                                  {completed ? "Done" : "Todo"}
+                                </span>
                               </span>
                             </div>
                             <span className="text-[11px] text-slate-500 dark:text-slate-400">
@@ -438,6 +471,89 @@ export default function CoursePage() {
                   </div>
                 ))}
               </div>
+            </div>
+
+            <div className="rounded-2xl border border-slate-200/70 bg-white/90 p-5 text-sm shadow-[0_8px_30px_-16px_rgba(15,23,42,0.35)] dark:border-slate-800/80 dark:bg-slate-900/70">
+              <div className="flex items-center justify-between">
+                <h3 className="text-base font-semibold">Course feedback</h3>
+                <button
+                  type="button"
+                  onClick={() => setIsFeedbackOpen((prev) => !prev)}
+                  className="rounded-full border border-slate-200/70 bg-white px-2 py-1 text-[11px] font-semibold text-slate-600 transition hover:border-slate-300 dark:border-slate-800/80 dark:bg-slate-950/40 dark:text-slate-200"
+                >
+                  {isFeedbackOpen ? "Hide" : "Show"}
+                </button>
+              </div>
+              {isFeedbackOpen ? (
+                <>
+                  <p className="mt-2 text-xs text-slate-600 dark:text-slate-400">
+                    Rate this course and share comments to help improve the AI
+                    outputs.
+                  </p>
+                  <div className="mt-4">
+                    <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                      Rating
+                    </p>
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      {[1, 2, 3, 4, 5].map((value) => {
+                        const isActive = (feedbackRating ?? 0) >= value;
+                        return (
+                          <button
+                            key={value}
+                            type="button"
+                            onClick={() => setFeedbackRating(value)}
+                            aria-label={`Rate ${value} star${value > 1 ? "s" : ""}`}
+                            className={`flex h-9 w-9 items-center justify-center rounded-full border transition ${
+                              isActive
+                                ? "border-amber-300 bg-amber-50 text-amber-500 dark:border-amber-400/60 dark:bg-amber-500/10"
+                                : "border-slate-200/70 bg-white/80 text-slate-400 hover:border-slate-300 dark:border-slate-800/80 dark:bg-slate-950/40 dark:text-slate-500"
+                            }`}
+                          >
+                            <svg
+                              aria-hidden="true"
+                              className="h-4 w-4"
+                              fill={isActive ? "currentColor" : "none"}
+                              stroke="currentColor"
+                              strokeWidth={1.5}
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                d="M11.48 3.499a.75.75 0 011.04 0l2.41 2.397 3.336.485a.75.75 0 01.415 1.279l-2.412 2.35.57 3.32a.75.75 0 01-1.088.79L12 12.75l-2.99 1.57a.75.75 0 01-1.09-.79l.57-3.32-2.41-2.35a.75.75 0 01.415-1.28l3.336-.484 2.41-2.397z"
+                              />
+                            </svg>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                  <div className="mt-4">
+                    <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                      Comments
+                    </p>
+                    <textarea
+                      className="mt-2 w-full rounded-xl border border-slate-200/70 bg-white/80 px-3 py-2 text-xs text-slate-700 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-slate-300 dark:border-slate-800/80 dark:bg-slate-950/40 dark:text-slate-200"
+                      placeholder="Share what worked well or what should improve..."
+                      rows={4}
+                      value={feedbackComment}
+                      onChange={(event) => setFeedbackComment(event.target.value)}
+                    />
+                  </div>
+                  <button
+                    className="mt-4 w-full rounded-full border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 transition hover:border-slate-300 dark:border-slate-800 dark:bg-slate-950/40 dark:text-slate-200"
+                    type="button"
+                    onClick={handleSubmitFeedback}
+                  >
+                    Submit feedback
+                  </button>
+                  {feedbackMessage ? (
+                    <p className="mt-3 text-xs text-slate-500 dark:text-slate-400">
+                      {feedbackMessage}
+                    </p>
+                  ) : null}
+                </>
+              ) : null}
             </div>
           </aside>
         </div>

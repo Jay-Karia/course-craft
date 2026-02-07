@@ -1,6 +1,6 @@
 export type CourseMeta = {
   id: string;
-}
+};
 
 export type Config = {
   audience: string;
@@ -9,14 +9,14 @@ export type Config = {
   narrationVoice: string;
   maxChapters: number;
   includedQuizzes: boolean;
-}
+};
 
 export type CourseCreationData = {
   text: string;
   fileUrls: string[];
   links: string[];
   config: Config;
-}
+};
 
 export type Course = {
   id: string;
@@ -24,4 +24,4 @@ export type Course = {
   description: string;
   thumbnailUrl: string;
   meta: CourseMeta;
-}
+};

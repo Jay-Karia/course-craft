@@ -1,4 +1,4 @@
-import {MdKeyboardArrowRight} from "react-icons/md";
+import { MdKeyboardArrowRight } from "react-icons/md";
 
 export default function RecommendedCourses() {
   const recommendedCourses = [

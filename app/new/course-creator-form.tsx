@@ -232,7 +232,10 @@ export default function CourseCreatorForm() {
                       <Label className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
                         Video length
                       </Label>
-                      <Select value={videoLength} onValueChange={setVideoLength}>
+                      <Select
+                        value={videoLength}
+                        onValueChange={setVideoLength}
+                      >
                         <SelectTrigger className="w-full rounded-lg border border-slate-200/80 bg-white/80 px-3 py-2 text-sm text-slate-700 shadow-sm dark:border-slate-700/80 dark:bg-slate-950/60 dark:text-slate-200">
                           <SelectValue placeholder="Select length" />
                         </SelectTrigger>

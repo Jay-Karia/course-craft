@@ -100,11 +100,11 @@ const generateCourseCopy = async (input: {
   const response = await fetch(
     `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
     {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
         systemInstruction: {
           role: "system",
           parts: [
@@ -172,24 +172,32 @@ export async function POST(request: Request) {
     }
 
     const titleFromText = (() => {
-      const firstLine = trimmedText.split(/\n+/).find((line: string) => line.trim());
+      const firstLine = trimmedText
+        .split(/\n+/)
+        .find((line: string) => line.trim());
       if (!firstLine) return "Untitled Course";
       const sentence = firstLine.split(/[.!?]/)[0]?.trim() || firstLine.trim();
       return sentence.length > 80 ? `${sentence.slice(0, 77)}...` : sentence;
     })();
 
-    const providedTitle = typeof body?.title === "string" ? body.title.trim() : "";
+    const providedTitle =
+      typeof body?.title === "string" ? body.title.trim() : "";
     const providedDescription =
       typeof body?.description === "string" ? body.description.trim() : "";
     const providedThumbnail =
       typeof body?.thumbnailUrl === "string" ? body.thumbnailUrl.trim() : "";
 
-    const audience = typeof body?.config?.audience === "string" ? body.config.audience : "";
+    const audience =
+      typeof body?.config?.audience === "string" ? body.config.audience : "";
     const tone = typeof body?.config?.tone === "string" ? body.config.tone : "";
     const videoLength =
-      typeof body?.config?.videoLength === "string" ? body.config.videoLength : "3-5 min";
+      typeof body?.config?.videoLength === "string"
+        ? body.config.videoLength
+        : "3-5 min";
     const narrationVoice =
-      typeof body?.config?.narrationVoice === "string" ? body.config.narrationVoice : "";
+      typeof body?.config?.narrationVoice === "string"
+        ? body.config.narrationVoice
+        : "";
 
     const aiCopy = await generateCourseCopy({
       text: trimmedText,
@@ -247,11 +255,12 @@ export async function POST(request: Request) {
           {
             id: crypto.randomUUID(),
             title: "Lesson 1 · Sora AI Overview",
-            summary:
-              `A concise introduction with one generated video to explain the essentials${audience ? ` for ${audience}` : ""}.`,
+            summary: `A concise introduction with one generated video to explain the essentials${audience ? ` for ${audience}` : ""}.`,
             video: buildVideo(
               `Create a single video lesson in a ${tone || "clear"} tone${
-                narrationVoice ? ` with a ${narrationVoice} narration voice` : ""
+                narrationVoice
+                  ? ` with a ${narrationVoice} narration voice`
+                  : ""
               }. Focus on the core ideas from the provided materials.`,
             ),
           },
@@ -313,13 +322,16 @@ export async function POST(request: Request) {
       },
     };
 
-    console.log(course)
+    console.log(course);
 
     return NextResponse.json({ ok: true, course });
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (error: any) {
     console.error("[POST /api/create] Critical Failure:", error);
-    return NextResponse.json({ ok: false, error: error.message }, { status: 500 });
+    return NextResponse.json(
+      { ok: false, error: error.message },
+      { status: 500 },
+    );
   }
 }

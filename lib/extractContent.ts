@@ -2,7 +2,10 @@
 
 import { pathToFileURL } from "url";
 import { createRequire } from "module";
-import { getDocument, GlobalWorkerOptions } from "pdfjs-dist/legacy/build/pdf.mjs";
+import {
+  getDocument,
+  GlobalWorkerOptions,
+} from "pdfjs-dist/legacy/build/pdf.mjs";
 
 type PdfExtractResult = {
   text: string;
@@ -10,9 +13,14 @@ type PdfExtractResult = {
 };
 
 const normalizeText = (value: string) =>
-  value.replace(/\s+\n/g, "\n").replace(/\n{3,}/g, "\n\n").trim();
+  value
+    .replace(/\s+\n/g, "\n")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
 
-export async function extractPdfContent(fileUrl: string): Promise<PdfExtractResult> {
+export async function extractPdfContent(
+  fileUrl: string,
+): Promise<PdfExtractResult> {
   if (!fileUrl) {
     return { text: "", pages: 0 };
   }
@@ -27,9 +35,8 @@ export async function extractPdfContent(fileUrl: string): Promise<PdfExtractResu
 
     if (!GlobalWorkerOptions.workerSrc) {
       const require = createRequire(import.meta.url);
-      const workerPath = require.resolve(
-        "pdfjs-dist/legacy/build/pdf.worker.min.mjs",
-      );
+      const workerPath =
+        require.resolve("pdfjs-dist/legacy/build/pdf.worker.min.mjs");
       GlobalWorkerOptions.workerSrc = pathToFileURL(workerPath).toString();
     }
 

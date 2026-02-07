@@ -13,7 +13,9 @@ type UploadFileButtonProps = {
   onUploaded?: (files: UploadedFile[]) => void;
 };
 
-export default function UploadFileButton({ onUploaded }: UploadFileButtonProps) {
+export default function UploadFileButton({
+  onUploaded,
+}: UploadFileButtonProps) {
   const [uploadedNames, setUploadedNames] = useState<string[]>([]);
 
   return (

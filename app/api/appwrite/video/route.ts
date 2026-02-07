@@ -49,7 +49,8 @@ export async function GET(request: Request) {
       );
     }
 
-    const contentType = appwriteResponse.headers.get("content-type") ?? "video/mp4";
+    const contentType =
+      appwriteResponse.headers.get("content-type") ?? "video/mp4";
 
     return new Response(appwriteResponse.body, {
       status: 200,

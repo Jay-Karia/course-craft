@@ -16,7 +16,10 @@ type ExtractedUrlBundle = {
 };
 
 const normalizeText = (value: string) =>
-  value.replace(/\s+\n/g, "\n").replace(/\n{3,}/g, "\n\n").trim();
+  value
+    .replace(/\s+\n/g, "\n")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
 
 const MAX_URL_TEXT_CHARS = 800;
 const MAX_COMBINED_TEXT_CHARS = 3000;
@@ -42,7 +45,7 @@ const extractTitle = (html: string) => {
 
   // Fallback to og:title
   const ogTitleMatch = html.match(
-    /<meta[^>]*property=["']og:title["'][^>]*content=["']([^"']+)["'][^>]*>/i
+    /<meta[^>]*property=["']og:title["'][^>]*content=["']([^"']+)["'][^>]*>/i,
   );
   return normalizeText(ogTitleMatch?.[1] ?? "");
 };
@@ -50,13 +53,13 @@ const extractTitle = (html: string) => {
 const extractMetaDescription = (html: string) => {
   // Try standard meta description
   let match = html.match(
-    /<meta[^>]*name=["']description["'][^>]*content=["']([^"']+)["'][^>]*>/i
+    /<meta[^>]*name=["']description["'][^>]*content=["']([^"']+)["'][^>]*>/i,
   );
 
   if (!match) {
     // Try og:description
     match = html.match(
-      /<meta[^>]*property=["']og:description["'][^>]*content=["']([^"']+)["'][^>]*>/i
+      /<meta[^>]*property=["']og:description["'][^>]*content=["']([^"']+)["'][^>]*>/i,
     );
   }
 
@@ -90,7 +93,7 @@ const extractMainContent = (html: string): string => {
 };
 
 const isValidUrl = (value: string) => {
-  if (!value || typeof value !== 'string') return false;
+  if (!value || typeof value !== "string") return false;
 
   try {
     const parsed = new URL(value.trim());
@@ -108,8 +111,8 @@ const buildFallbackUrl = (url: string) => {
 export async function extractUrls(urls: string[]): Promise<ExtractedUrlBundle> {
   // Validate and clean URLs
   const validUrls = (urls ?? [])
-    .filter((url) => url && typeof url === 'string')
-    .map(url => url.trim())
+    .filter((url) => url && typeof url === "string")
+    .map((url) => url.trim())
     .filter((url) => isValidUrl(url));
 
   if (validUrls.length === 0) {
@@ -127,7 +130,8 @@ export async function extractUrls(urls: string[]): Promise<ExtractedUrlBundle> {
           redirect: "follow",
           headers: {
             "User-Agent": "Mozilla/5.0 (compatible; KinetixBot/1.0)",
-            Accept: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+            Accept:
+              "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
             "Accept-Language": "en-US,en;q=0.9",
           },
         });
@@ -150,7 +154,7 @@ export async function extractUrls(urls: string[]): Promise<ExtractedUrlBundle> {
                 0,
                 MAX_URL_TEXT_CHARS,
               );
-              const lines = raw.split("\n").filter(line => line.trim());
+              const lines = raw.split("\n").filter((line) => line.trim());
               const firstLine = lines[0] ?? "";
 
               return {
@@ -183,7 +187,10 @@ export async function extractUrls(urls: string[]): Promise<ExtractedUrlBundle> {
         let description = "";
         let combinedText = "";
 
-        if (contentType.includes("text/html") || contentType.includes("application/xhtml")) {
+        if (
+          contentType.includes("text/html") ||
+          contentType.includes("application/xhtml")
+        ) {
           title = extractTitle(raw);
           description = extractMetaDescription(raw);
           const h1 = extractH1(raw);
@@ -195,7 +202,7 @@ export async function extractUrls(urls: string[]): Promise<ExtractedUrlBundle> {
             title,
             h1 && h1 !== title ? h1 : "",
             description,
-            text
+            text,
           ].filter(Boolean);
 
           combinedText = normalizeText(parts.join("\n\n"));
@@ -220,11 +227,12 @@ export async function extractUrls(urls: string[]): Promise<ExtractedUrlBundle> {
           status: response.status,
           contentType: contentType || undefined,
         };
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
       } catch (error: any) {
-        const errorMessage = error.name === 'AbortError'
-          ? 'Request timeout'
-          : error.message || 'Failed to fetch';
+        const errorMessage =
+          error.name === "AbortError"
+            ? "Request timeout"
+            : error.message || "Failed to fetch";
 
         console.error(`Error fetching ${url}:`, errorMessage);
 
@@ -242,7 +250,7 @@ export async function extractUrls(urls: string[]): Promise<ExtractedUrlBundle> {
   );
 
   // Filter out failed results and combine text
-  const successfulResults = results.filter(item => item.text && !item.error);
+  const successfulResults = results.filter((item) => item.text && !item.error);
 
   const combinedText = normalizeText(
     successfulResults
