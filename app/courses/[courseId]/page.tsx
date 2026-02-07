@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
+import { GoLinkExternal } from "react-icons/go";
 
 type CourseVideo = {
   provider: string;
@@ -233,6 +234,8 @@ export default function CoursePage() {
   const [feedbackComment, setFeedbackComment] = useState("");
   const [feedbackMessage, setFeedbackMessage] = useState<string | null>(null);
   const [isFeedbackOpen, setIsFeedbackOpen] = useState(false);
+  const [isDoubtOpen, setIsDoubtOpen] = useState(false);
+  const [doubtDraft, setDoubtDraft] = useState("");
 
   useEffect(() => {
     if (!courseId || typeof window === "undefined") return;
@@ -360,7 +363,7 @@ export default function CoursePage() {
                 </video>
               </div>
               <div className="p-6">
-                <div className="flex flex-wrap items-center justify-between gap-3">
+                <div className="flex flex-col items-start justify-between gap-3">
                   <div>
                     <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
                       Now playing
@@ -374,14 +377,8 @@ export default function CoursePage() {
                     </p>
                   </div>
                   <div className="flex flex-wrap gap-2">
-                    <span className="rounded-full bg-indigo-100 px-2 py-0.5 text-xs font-semibold text-indigo-700 dark:bg-indigo-500/20 dark:text-indigo-200">
-                      {selectedLesson?.video.provider ?? "Sora AI"}
-                    </span>
                     <span className="rounded-full border border-slate-200/70 bg-white/80 px-2 py-0.5 text-xs font-semibold text-slate-700 dark:border-slate-700/70 dark:bg-slate-900/60 dark:text-slate-200">
                       {selectedLesson?.video.duration ?? "3-5 min"}
-                    </span>
-                    <span className="rounded-full border border-slate-200/70 bg-white/80 px-2 py-0.5 text-xs font-semibold text-slate-700 dark:border-slate-700/70 dark:bg-slate-900/60 dark:text-slate-200">
-                      {selectedLesson?.video.status ?? "queued"}
                     </span>
                     <span
                       className={`rounded-full px-2 py-0.5 text-xs font-semibold ${
@@ -396,14 +393,26 @@ export default function CoursePage() {
                     </span>
                   </div>
                 </div>
-                <div className="mt-4 rounded-xl border border-dashed border-slate-200/70 bg-slate-50/60 p-4 text-xs text-slate-600 dark:border-slate-800/80 dark:bg-slate-900/40 dark:text-slate-300">
-                  <p className="font-semibold text-slate-700 dark:text-slate-200">
-                    Video prompt
+
+                {/* Notes */}
+                <div className="mt-6">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                    Notes
                   </p>
-                  <p className="mt-2">
-                    {selectedLesson?.video.prompt ??
-                      "Video prompt will appear here once generated."}
-                  </p>
+                  <textarea
+                    className="mt-2 w-full rounded-xl border border-slate-200/70 bg-white/80 px-3 py-2 text-xs text-slate-700 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-slate-300 dark:border-slate-800/80 dark:bg-slate-950/40 dark:text-slate-200"
+                    placeholder="Write your notes for this lesson here..."
+                    rows={4}
+                  />
+                  <div className="mt-3 flex flex-wrap items-end justify-end gap-2">
+                    <button
+                      className="rounded-full border border-slate-200 bg-slate-100 px-4 py-2 text-xs font-semibold text-slate-700 transition hover:border-slate-300 dark:border-slate-800 dark:bg-slate-950/40 dark:text-slate-200 flex items-center gap-1"
+                      type="button"
+                      onClick={() => setIsDoubtOpen(true)}
+                    >
+                      Open doubt solver
+                    </button>
+                  </div>
                 </div>
               </div>
             </div>
@@ -561,6 +570,62 @@ export default function CoursePage() {
           </aside>
         </div>
       </div>
+      {isDoubtOpen ? (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/50 px-4 py-8">
+          <div className="w-full max-w-2xl rounded-2xl border border-slate-200/70 bg-white/95 p-6 shadow-[0_20px_60px_-20px_rgba(15,23,42,0.45)] dark:border-slate-800/80 dark:bg-slate-950/95">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                  Doubt solver
+                </p>
+                <h3 className="text-lg font-semibold">
+                  Ask about {selectedLesson?.title ?? "this lesson"}
+                </h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsDoubtOpen(false)}
+                className="rounded-full border border-slate-200/70 bg-white px-3 py-1 text-xs font-semibold text-slate-600 transition hover:border-slate-300 dark:border-slate-800/80 dark:bg-slate-950/40 dark:text-slate-200"
+              >
+                Close
+              </button>
+            </div>
+
+            <div className="mt-6 space-y-3">
+              <div className="rounded-xl border border-slate-200/70 bg-slate-50/80 p-4 text-xs text-slate-600 dark:border-slate-800/80 dark:bg-slate-900/60 dark:text-slate-300">
+                <p className="font-semibold text-slate-700 dark:text-slate-200">
+                  You
+                </p>
+                <p>Can you summarize the main takeaway in two sentences?</p>
+              </div>
+              <div className="rounded-xl border border-slate-200/70 bg-white/90 p-4 text-xs text-slate-600 dark:border-slate-800/80 dark:bg-slate-950/60 dark:text-slate-300">
+                <p className="font-semibold text-slate-700 dark:text-slate-200">
+                  AI Tutor
+                </p>
+                <p>
+                  Placeholder response. The doubt solver will provide
+                  lesson-aware guidance and citations when integrated.
+                </p>
+              </div>
+            </div>
+
+            <div className="mt-5 flex items-center gap-2">
+              <input
+                className="w-full rounded-full border border-slate-200/70 bg-white/90 px-4 py-2 text-xs text-slate-700 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-slate-300 dark:border-slate-800/80 dark:bg-slate-950/40 dark:text-slate-200"
+                placeholder="Ask a question about this lesson..."
+                value={doubtDraft}
+                onChange={(event) => setDoubtDraft(event.target.value)}
+              />
+              <button
+                className="rounded-full border border-slate-200 bg-white px-4 py-2 text-xs font-semibold text-slate-700 transition hover:border-slate-300 dark:border-slate-800 dark:bg-slate-950/40 dark:text-slate-200"
+                type="button"
+              >
+                Send
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }
