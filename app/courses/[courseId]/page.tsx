@@ -32,198 +32,11 @@ type CourseDetails = {
   description: string;
   thumbnailUrl: string;
   modules?: CourseModule[];
+  generationErrors?: string[];
 };
 
 const APPWRITE_VIDEO_URL =
   "https://sgp.cloud.appwrite.io/v1/storage/buckets/69872bd5002381c18915/files/698762350015908687a3/view?project=6985f4df000a987b6a15&mode=public";
-
-const buildFallbackModules = (courseTitle: string): CourseModule[] => {
-  const baseVideo: CourseVideo = {
-    provider: "Sora AI",
-    status: "queued",
-    duration: "3-5 min",
-    prompt: "Generate a concise explainer for this lesson.",
-    url: APPWRITE_VIDEO_URL,
-  };
-
-  return [
-    {
-      id: "module-1",
-      title: "Module 1 · Foundations",
-      description: `Core concepts and context for ${courseTitle}.`,
-      lessons: [
-        {
-          id: "lesson-1-1",
-          title: "Lesson 1 · Course overview",
-          summary: "Understand the course goals and outcomes.",
-          video: baseVideo,
-        },
-        {
-          id: "lesson-1-2",
-          title: "Lesson 2 · Key terms",
-          summary: "Define the essential vocabulary you will use.",
-          video: baseVideo,
-        },
-        {
-          id: "lesson-1-3",
-          title: "Lesson 3 · Workflow setup",
-          summary: "Prepare tools and resources for the course.",
-          video: baseVideo,
-        },
-      ],
-    },
-    {
-      id: "module-2",
-      title: "Module 2 · Applied practice",
-      description: "Hands-on walkthroughs and real examples.",
-      lessons: [
-        {
-          id: "lesson-2-1",
-          title: "Lesson 4 · Guided demo",
-          summary: "Follow a step-by-step demonstration.",
-          video: baseVideo,
-        },
-        {
-          id: "lesson-2-2",
-          title: "Lesson 5 · Common pitfalls",
-          summary: "Avoid mistakes and learn best practices.",
-          video: baseVideo,
-        },
-        {
-          id: "lesson-2-3",
-          title: "Lesson 6 · Quick exercise",
-          summary: "Apply the concepts with a short task.",
-          video: baseVideo,
-        },
-      ],
-    },
-    {
-      id: "module-3",
-      title: "Module 3 · Next steps",
-      description: "Wrap up and plan what to learn next.",
-      lessons: [
-        {
-          id: "lesson-3-1",
-          title: "Lesson 7 · Recap",
-          summary: "Summarize the most important takeaways.",
-          video: baseVideo,
-        },
-        {
-          id: "lesson-3-2",
-          title: "Lesson 8 · Advanced tips",
-          summary: "Explore optional enhancements and tips.",
-          video: baseVideo,
-        },
-        {
-          id: "lesson-3-3",
-          title: "Lesson 9 · Graduation",
-          summary: "Review your progress and completion checklist.",
-          video: baseVideo,
-        },
-      ],
-    },
-    {
-      id: "module-4",
-      title: "Module 4 · Advanced workflows",
-      description: "Speed, polish, and quality improvements.",
-      lessons: [
-        {
-          id: "lesson-4-1",
-          title: "Lesson 10 · Speed techniques",
-          summary: "Accelerate delivery without sacrificing clarity.",
-          video: baseVideo,
-        },
-        {
-          id: "lesson-4-2",
-          title: "Lesson 11 · Visual polish",
-          summary: "Improve visuals, pacing, and clarity.",
-          video: baseVideo,
-        },
-        {
-          id: "lesson-4-3",
-          title: "Lesson 12 · Quality checklist",
-          summary: "Validate the final output before sharing.",
-          video: baseVideo,
-        },
-      ],
-    },
-    {
-      id: "module-5",
-      title: "Module 5 · Capstone",
-      description: "Bring everything together in a final project.",
-      lessons: [
-        {
-          id: "lesson-5-1",
-          title: "Lesson 13 · Capstone brief",
-          summary: "Review the final project requirements.",
-          video: baseVideo,
-        },
-        {
-          id: "lesson-5-2",
-          title: "Lesson 14 · Build the draft",
-          summary: "Create the first version of your project.",
-          video: baseVideo,
-        },
-        {
-          id: "lesson-5-3",
-          title: "Lesson 15 · Final review",
-          summary: "Refine and polish your final submission.",
-          video: baseVideo,
-        },
-      ],
-    },
-    {
-      id: "module-6",
-      title: "Module 6 · Optimization",
-      description: "Refine, iterate, and optimize outputs.",
-      lessons: [
-        {
-          id: "lesson-6-1",
-          title: "Lesson 16 · Performance pass",
-          summary: "Optimize for speed and clarity.",
-          video: baseVideo,
-        },
-        {
-          id: "lesson-6-2",
-          title: "Lesson 17 · Quality benchmarks",
-          summary: "Compare against quality targets.",
-          video: baseVideo,
-        },
-        {
-          id: "lesson-6-3",
-          title: "Lesson 18 · Iteration loops",
-          summary: "Use feedback cycles to improve results.",
-          video: baseVideo,
-        },
-      ],
-    },
-    {
-      id: "module-7",
-      title: "Module 7 · Deployment",
-      description: "Publish, share, and measure outcomes.",
-      lessons: [
-        {
-          id: "lesson-7-1",
-          title: "Lesson 19 · Release prep",
-          summary: "Finalize assets before publishing.",
-          video: baseVideo,
-        },
-        {
-          id: "lesson-7-2",
-          title: "Lesson 20 · Distribution",
-          summary: "Plan where and how to share.",
-          video: baseVideo,
-        },
-        {
-          id: "lesson-7-3",
-          title: "Lesson 21 · Measure impact",
-          summary: "Track success metrics over time.",
-          video: baseVideo,
-        },
-      ],
-    },
-  ];
-};
 
 export default function CoursePage() {
   const params = useParams<{ courseId: string }>();
@@ -255,9 +68,10 @@ export default function CoursePage() {
 
   const modules = useMemo(() => {
     if (!course) return [] as CourseModule[];
-    if (course.modules?.length) return course.modules;
-    return buildFallbackModules(course.title);
+    return course.modules ?? [];
   }, [course]);
+
+  const hasModuleData = Boolean(course?.modules?.length);
 
   const allLessons = useMemo(
     () => modules.flatMap((module) => module.lessons),
@@ -348,6 +162,16 @@ export default function CoursePage() {
               </span>
             </div>
           </div>
+          {course.generationErrors?.length ? (
+            <div className="rounded-2xl border border-amber-200/80 bg-amber-50/70 p-4 text-xs text-amber-700 shadow-[0_8px_30px_-20px_rgba(120,53,15,0.35)] dark:border-amber-400/40 dark:bg-amber-500/10 dark:text-amber-200">
+              <p className="font-semibold">AI generation warning</p>
+              <ul className="mt-2 list-disc space-y-1 pl-4">
+                {course.generationErrors.map((message, index) => (
+                  <li key={`${message}-${index}`}>{message}</li>
+                ))}
+              </ul>
+            </div>
+          ) : null}
         </header>
 
         <div className="grid gap-8 lg:grid-cols-[2fr_1fr]">
@@ -596,61 +420,77 @@ export default function CoursePage() {
                 </span>
               </div>
               <div className="mt-4 space-y-4">
-                {modules.map((module, index) => (
-                  <div key={module.id} className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                          Module {index + 1}
-                        </p>
-                        <p className="text-sm font-semibold">{module.title}</p>
+                {hasModuleData ? (
+                  modules.map((module, index) => (
+                    <div key={module.id} className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                            Module {index + 1}
+                          </p>
+                          <p className="text-sm font-semibold">{module.title}</p>
+                        </div>
+                        <span className="rounded-full border border-slate-200/70 bg-white/80 px-2 py-0.5 text-xs font-semibold text-slate-700 dark:border-slate-700/70 dark:bg-slate-900/60 dark:text-slate-200">
+                          {module.lessons.length} lessons
+                        </span>
                       </div>
-                      <span className="rounded-full border border-slate-200/70 bg-white/80 px-2 py-0.5 text-xs font-semibold text-slate-700 dark:border-slate-700/70 dark:bg-slate-900/60 dark:text-slate-200">
-                        {module.lessons.length} lessons
-                      </span>
-                    </div>
-                    <div className="space-y-2">
-                      {module.lessons.map((lesson, lessonIndex) => {
-                        const isSelected =
-                          lesson.id === effectiveSelectedLessonId;
-                        const completed = isLessonCompleted(lesson.id);
-                        return (
-                          <button
-                            key={lesson.id}
-                            className={`flex w-full flex-col gap-1 rounded-xl border px-3 py-2 text-left text-xs transition ${
-                              isSelected
-                                ? "border-indigo-400 bg-indigo-50/80 text-indigo-900 dark:border-indigo-400/70 dark:bg-indigo-500/10 dark:text-indigo-100"
-                                : "border-slate-200/70 bg-white/80 text-slate-700 hover:border-slate-300 dark:border-slate-800/80 dark:bg-slate-950/40 dark:text-slate-200"
-                            }`}
-                            onClick={() => setSelectedLessonId(lesson.id)}
-                            type="button"
-                          >
-                            <div className="flex items-center justify-between">
-                              <span className="font-semibold">
-                                {lessonIndex + 1}. {lesson.title}
-                              </span>
-                              <span className="flex items-center gap-2 text-[10px] text-slate-500 dark:text-slate-400">
-                                <span>{lesson.video.duration}</span>
-                                <span
-                                  className={`rounded-full px-1.5 py-0.5 text-[9px] font-semibold ${
-                                    completed
-                                      ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-200"
-                                      : "bg-slate-100 text-slate-600 dark:bg-slate-800/60 dark:text-slate-300"
-                                  }`}
-                                >
-                                  {completed ? "Done" : "Todo"}
+                      <div className="space-y-2">
+                        {module.lessons.map((lesson, lessonIndex) => {
+                          const isSelected =
+                            lesson.id === effectiveSelectedLessonId;
+                          const completed = isLessonCompleted(lesson.id);
+                          return (
+                            <button
+                              key={lesson.id}
+                              className={`flex w-full flex-col gap-1 rounded-xl border px-3 py-2 text-left text-xs transition ${
+                                isSelected
+                                  ? "border-indigo-400 bg-indigo-50/80 text-indigo-900 dark:border-indigo-400/70 dark:bg-indigo-500/10 dark:text-indigo-100"
+                                  : "border-slate-200/70 bg-white/80 text-slate-700 hover:border-slate-300 dark:border-slate-800/80 dark:bg-slate-950/40 dark:text-slate-200"
+                              }`}
+                              onClick={() => setSelectedLessonId(lesson.id)}
+                              type="button"
+                            >
+                              <div className="flex items-center justify-between">
+                                <span className="font-semibold">
+                                  {lessonIndex + 1}. {lesson.title}
                                 </span>
+                                <span className="flex items-center gap-2 text-[10px] text-slate-500 dark:text-slate-400">
+                                  <span>{lesson.video.duration}</span>
+                                  <span
+                                    className={`rounded-full px-1.5 py-0.5 text-[9px] font-semibold ${
+                                      completed
+                                        ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-500/20 dark:text-emerald-200"
+                                        : "bg-slate-100 text-slate-600 dark:bg-slate-800/60 dark:text-slate-300"
+                                    }`}
+                                  >
+                                    {completed ? "Done" : "Todo"}
+                                  </span>
+                                </span>
+                              </div>
+                              <span className="text-[11px] text-slate-500 dark:text-slate-400">
+                                {lesson.summary}
                               </span>
-                            </div>
-                            <span className="text-[11px] text-slate-500 dark:text-slate-400">
-                              {lesson.summary}
-                            </span>
-                          </button>
-                        );
-                      })}
+                            </button>
+                          );
+                        })}
+                      </div>
                     </div>
+                  ))
+                ) : (
+                  <div className="rounded-xl border border-amber-200/80 bg-amber-50/70 p-4 text-xs text-amber-700 dark:border-amber-400/40 dark:bg-amber-500/10 dark:text-amber-200">
+                    <p className="font-semibold">Module data unavailable</p>
+                    <p className="mt-1">
+                      We couldn&apos;t load the course modules and lessons. Please
+                      return to the course creator and regenerate the outline.
+                    </p>
+                    <Link
+                      href="/new"
+                      className="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-amber-700 underline underline-offset-4 dark:text-amber-200"
+                    >
+                      Regenerate course
+                    </Link>
                   </div>
-                ))}
+                )}
               </div>
             </div>
 

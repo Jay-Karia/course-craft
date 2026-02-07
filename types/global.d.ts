@@ -24,4 +24,5 @@ export type Course = {
   description: string;
   thumbnailUrl: string;
   meta: CourseMeta;
+  generationErrors?: string[];
 };

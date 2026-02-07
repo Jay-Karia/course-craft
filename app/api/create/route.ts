@@ -439,6 +439,7 @@ export async function POST(request: Request) {
     const body = await request.json().catch(() => null);
     const rawText = typeof body?.text === "string" ? body.text : "";
     const trimmedText = rawText.trim();
+    const generationErrors: string[] = [];
 
     if (!trimmedText) {
       return NextResponse.json(
@@ -497,6 +498,10 @@ export async function POST(request: Request) {
 
     if (aiCopy) {
       console.log(`[AI] ✓ Generated title: "${aiCopy.title}"`);
+    } else {
+      generationErrors.push(
+        "AI failed to generate the course title and description. Using fallback content.",
+      );
     }
 
     // Generate detailed course outline with scripts
@@ -514,7 +519,10 @@ export async function POST(request: Request) {
     });
 
     if (!aiOutline) {
-      console.error("[AI] Failed to generate course outline, using fallback");
+      console.error("[AI] Failed to generate course outline");
+      generationErrors.push(
+        "AI failed to generate the course outline. Modules and lessons are unavailable.",
+      );
     } else {
       console.log(`[AI] ✓ Generated ${aiOutline.modules.length} modules`);
     }
@@ -579,205 +587,12 @@ export async function POST(request: Request) {
           quiz: lesson.quiz || null,
         })),
       }));
-    } else {
-      // Enhanced fallback with multiple modules
-      console.log("[AI] Using enhanced fallback with 4 modules");
-      modules = [
-        {
-          id: crypto.randomUUID(),
-          moduleNumber: 1,
-          title: `Module 1: Introduction & Fundamentals`,
-          description: `Get started with the core concepts and foundational knowledge.`,
-          estimatedTime: "45 minutes",
-          lessons: [
-            {
-              id: crypto.randomUUID(),
-              lessonNumber: 1,
-              title: "Lesson 1.1: Course Overview",
-              summary: "Introduction to the course structure and learning objectives",
-              topics: ["Course structure", "Learning objectives", "Prerequisites"],
-              keyPoints: ["Understand course goals", "Know what to expect", "Required background"],
-              duration: "15 minutes",
-              videoScript: "Welcome to this comprehensive course! In this opening lesson, we'll explore what you'll learn, how the course is structured, and the exciting journey ahead. We'll cover the key objectives and ensure you're ready to dive in.",
-              video: buildVideo("Course introduction and overview"),
-              quiz: includeQuizzes ? {
-                questions: [
-                  {
-                    question: "What is the main goal of this course?",
-                    options: ["Learn fundamentals", "Advanced only", "Unrelated", "None"],
-                    correctAnswer: "Learn fundamentals",
-                    explanation: "This course focuses on building strong fundamentals"
-                  }
-                ]
-              } : null,
-            },
-            {
-              id: crypto.randomUUID(),
-              lessonNumber: 2,
-              title: "Lesson 1.2: Core Concepts",
-              summary: "Deep dive into the essential concepts you need to master",
-              topics: ["Key terminology", "Basic principles", "Common patterns"],
-              keyPoints: ["Master key terms", "Understand principles", "Recognize patterns"],
-              duration: "15 minutes",
-              videoScript: "Now let's get into the core concepts. We'll break down complex ideas into simple, digestible parts. You'll learn the essential terminology and principles that form the foundation of everything else.",
-              video: buildVideo("Core concepts explanation"),
-              quiz: null,
-            },
-            {
-              id: crypto.randomUUID(),
-              lessonNumber: 3,
-              title: "Lesson 1.3: First Practical Example",
-              summary: "Apply what you've learned with a hands-on example",
-              topics: ["Practical application", "Step-by-step guide", "Common mistakes"],
-              keyPoints: ["Apply concepts", "Follow best practices", "Avoid pitfalls"],
-              duration: "15 minutes",
-              videoScript: "Theory is important, but practice makes perfect. In this lesson, we'll work through a real example together. You'll see how to apply the concepts we've learned and avoid common mistakes.",
-              video: buildVideo("First practical example walkthrough"),
-              quiz: null,
-            },
-          ],
-        },
-        {
-          id: crypto.randomUUID(),
-          moduleNumber: 2,
-          title: `Module 2: Building Your Skills`,
-          description: `Develop practical skills through guided exercises and examples.`,
-          estimatedTime: "60 minutes",
-          lessons: [
-            {
-              id: crypto.randomUUID(),
-              lessonNumber: 1,
-              title: "Lesson 2.1: Intermediate Techniques",
-              summary: "Level up with more advanced techniques and strategies",
-              topics: ["Advanced methods", "Optimization", "Best practices"],
-              keyPoints: ["Learn advanced techniques", "Optimize workflow", "Professional standards"],
-              duration: "20 minutes",
-              videoScript: "Ready to take it to the next level? In this lesson, we'll explore intermediate techniques that professionals use. You'll learn how to optimize your approach and work more efficiently.",
-              video: buildVideo("Intermediate techniques tutorial"),
-              quiz: null,
-            },
-            {
-              id: crypto.randomUUID(),
-              lessonNumber: 2,
-              title: "Lesson 2.2: Real-World Project",
-              summary: "Work on a realistic project that simulates real scenarios",
-              topics: ["Project planning", "Implementation", "Testing"],
-              keyPoints: ["Plan effectively", "Build systematically", "Test thoroughly"],
-              duration: "20 minutes",
-              videoScript: "Let's build something real! In this project-based lesson, you'll apply everything you've learned to create a complete solution. We'll go through planning, building, and testing together.",
-              video: buildVideo("Real-world project tutorial"),
-              quiz: null,
-            },
-            {
-              id: crypto.randomUUID(),
-              lessonNumber: 3,
-              title: "Lesson 2.3: Problem Solving",
-              summary: "Learn to troubleshoot and solve common challenges",
-              topics: ["Debugging", "Problem analysis", "Solutions"],
-              keyPoints: ["Identify issues", "Analyze problems", "Find solutions"],
-              duration: "20 minutes",
-              videoScript: "Every professional encounters problems. In this lesson, you'll learn systematic approaches to troubleshooting and problem-solving. We'll work through common challenges and their solutions.",
-              video: buildVideo("Problem solving strategies"),
-              quiz: null,
-            },
-          ],
-        },
-        {
-          id: crypto.randomUUID(),
-          moduleNumber: 3,
-          title: `Module 3: Advanced Applications`,
-          description: `Master advanced concepts and complex scenarios.`,
-          estimatedTime: "60 minutes",
-          lessons: [
-            {
-              id: crypto.randomUUID(),
-              lessonNumber: 1,
-              title: "Lesson 3.1: Advanced Patterns",
-              summary: "Explore sophisticated patterns used by experts",
-              topics: ["Design patterns", "Architecture", "Scalability"],
-              keyPoints: ["Master patterns", "Design systems", "Scale solutions"],
-              duration: "20 minutes",
-              videoScript: "Welcome to the advanced section! Here we'll explore patterns and architectures used in professional settings. You'll learn how to design scalable, maintainable solutions.",
-              video: buildVideo("Advanced patterns and architecture"),
-              quiz: null,
-            },
-            {
-              id: crypto.randomUUID(),
-              lessonNumber: 2,
-              title: "Lesson 3.2: Complex Scenarios",
-              summary: "Handle complex, multi-faceted challenges",
-              topics: ["Complex problems", "Integration", "Edge cases"],
-              keyPoints: ["Solve complex problems", "Integrate systems", "Handle edge cases"],
-              duration: "20 minutes",
-              videoScript: "Real-world scenarios are rarely simple. In this lesson, we'll tackle complex challenges that involve multiple components and considerations. You'll learn to think systematically about complicated problems.",
-              video: buildVideo("Complex scenario solutions"),
-              quiz: null,
-            },
-            {
-              id: crypto.randomUUID(),
-              lessonNumber: 3,
-              title: "Lesson 3.3: Performance & Optimization",
-              summary: "Optimize for speed, efficiency, and quality",
-              topics: ["Performance tuning", "Optimization", "Quality assurance"],
-              keyPoints: ["Measure performance", "Optimize effectively", "Ensure quality"],
-              duration: "20 minutes",
-              videoScript: "Good code works, great code performs. In this lesson, you'll learn how to measure, analyze, and optimize your solutions for peak performance and quality.",
-              video: buildVideo("Performance optimization guide"),
-              quiz: null,
-            },
-          ],
-        },
-        {
-          id: crypto.randomUUID(),
-          moduleNumber: 4,
-          title: `Module 4: Mastery & Next Steps`,
-          description: `Consolidate your knowledge and plan your continued learning journey.`,
-          estimatedTime: "45 minutes",
-          lessons: [
-            {
-              id: crypto.randomUUID(),
-              lessonNumber: 1,
-              title: "Lesson 4.1: Best Practices Review",
-              summary: "Comprehensive review of industry best practices",
-              topics: ["Professional standards", "Code quality", "Team collaboration"],
-              keyPoints: ["Follow standards", "Write quality code", "Work effectively"],
-              duration: "15 minutes",
-              videoScript: "Let's consolidate everything you've learned. In this lesson, we'll review industry best practices and professional standards. You'll learn what separates good from great in real-world applications.",
-              video: buildVideo("Best practices comprehensive review"),
-              quiz: null,
-            },
-            {
-              id: crypto.randomUUID(),
-              lessonNumber: 2,
-              title: "Lesson 4.2: Capstone Project",
-              summary: "Complete a comprehensive project showcasing your skills",
-              topics: ["End-to-end project", "Portfolio piece", "Presentation"],
-              keyPoints: ["Build complete solution", "Create portfolio", "Present work"],
-              duration: "15 minutes",
-              videoScript: "Time to showcase everything you've learned! In this capstone project, you'll create a complete, portfolio-worthy piece. We'll go through the entire process from concept to completion.",
-              video: buildVideo("Capstone project guide"),
-              quiz: null,
-            },
-            {
-              id: crypto.randomUUID(),
-              lessonNumber: 3,
-              title: "Lesson 4.3: Your Learning Path Forward",
-              summary: "Resources and guidance for continued growth",
-              topics: ["Next steps", "Resources", "Community"],
-              keyPoints: ["Continue learning", "Find resources", "Join community"],
-              duration: "15 minutes",
-              videoScript: "Congratulations on completing the course! But this is just the beginning. In this final lesson, we'll map out your continued learning journey, share valuable resources, and connect you with the community.",
-              video: buildVideo("Future learning path and resources"),
-              quiz: null,
-            },
-          ],
-        },
-      ];
     }
 
     const course = {
       ...baseCourse,
       modules,
+      generationErrors,
       source: {
         textLength: trimmedText.length,
         links: Array.isArray(body?.links) ? body.links : [],
