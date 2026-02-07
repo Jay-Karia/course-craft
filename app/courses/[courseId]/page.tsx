@@ -3,7 +3,6 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { GoLinkExternal } from "react-icons/go";
 
 type CourseVideo = {
   provider: string;
@@ -235,13 +234,14 @@ export default function CoursePage() {
   const [feedbackMessage, setFeedbackMessage] = useState<string | null>(null);
   const [isFeedbackOpen, setIsFeedbackOpen] = useState(false);
   const [isDoubtOpen, setIsDoubtOpen] = useState(false);
+  const [isQuizOpen, setIsQuizOpen] = useState(false);
   const [doubtDraft, setDoubtDraft] = useState("");
 
   useEffect(() => {
     if (!courseId || typeof window === "undefined") return;
     const stored = sessionStorage.getItem(`course:${courseId}`);
     const fallbackStored = localStorage.getItem(`course:${courseId}`);
-    console.log(stored)
+    console.log(stored);
     const resolved = stored || fallbackStored;
     if (!resolved) return;
     try {
@@ -324,7 +324,7 @@ export default function CoursePage() {
   }
 
   return (
-    <div className="h-screen overflow-y-auto bg-slate-50/70 px-6 py-16 text-slate-900 dark:bg-slate-950 dark:text-slate-100">
+    <div className="h-screen overflow-y-auto bg-slate-50/70 px-6 py-16 text-slate-900 dark:bg-slate-950 dark:text-slate-100 mb-40">
       <div className="mx-auto flex w-full max-w-6xl flex-col gap-8">
         <header className="space-y-4">
           <div className="flex flex-wrap items-center justify-between gap-4">
@@ -404,15 +404,152 @@ export default function CoursePage() {
                     placeholder="Write your notes for this lesson here..."
                     rows={4}
                   />
-                  <div className="mt-3 flex flex-wrap items-end justify-end gap-2">
-                    <button
-                      className="rounded-full border border-slate-200 bg-slate-100 px-4 py-2 text-xs font-semibold text-slate-700 transition hover:border-slate-300 dark:border-slate-800 dark:bg-slate-950/40 dark:text-slate-200 flex items-center gap-1"
-                      type="button"
-                      onClick={() => setIsDoubtOpen(true)}
-                    >
-                      Open doubt solver
-                    </button>
+                </div>
+
+                {/* Quiz placeholder */}
+                <div className="mt-6 rounded-2xl border border-dashed border-slate-200/80 bg-slate-50/70 p-4 dark:border-slate-800/80 dark:bg-slate-950/40">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <div>
+                      <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                        Lesson quiz
+                      </p>
+                      <h3 className="text-sm font-semibold">Knowledge check</h3>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setIsQuizOpen((prev) => !prev)}
+                        className="rounded-full border border-slate-200/70 bg-white px-2 py-1 text-[11px] font-semibold text-slate-600 transition hover:border-slate-300 dark:border-slate-800/80 dark:bg-slate-950/40 dark:text-slate-200"
+                      >
+                        {isQuizOpen ? "Hide" : "Show"}
+                      </button>
+                    </div>
                   </div>
+                  <p className="mt-2 text-xs text-slate-600 dark:text-slate-400">
+                    Multiple-choice checks tailored to{" "}
+                    {selectedLesson?.title ?? "this lesson"}.
+                  </p>
+                  {isQuizOpen ? (
+                    <div className="mt-3 grid gap-3 text-xs text-slate-600 dark:text-slate-400">
+                      <div className="rounded-xl border border-slate-200/70 bg-white/80 p-3 dark:border-slate-800/80 dark:bg-slate-950/40">
+                        <p className="font-semibold text-slate-700 dark:text-slate-200">
+                          Q1. What is the primary goal of this lesson?
+                        </p>
+                        <div className="mt-2 grid gap-2 text-[11px]">
+                          {[
+                            "Establish key outcomes and success criteria",
+                            "Introduce unrelated background history",
+                            "Skip setup and jump to advanced topics",
+                            "Focus only on tool installation",
+                          ].map((choice, index) => (
+                            <label
+                              key={choice}
+                              className="flex items-center gap-2 rounded-lg border border-slate-200/70 bg-white/70 px-2 py-2 dark:border-slate-800/80 dark:bg-slate-950/40"
+                            >
+                              <input
+                                type="radio"
+                                name="quiz-q1"
+                                disabled
+                                className="h-3 w-3"
+                              />
+                              <span>{`${String.fromCharCode(65 + index)}. ${choice}`}</span>
+                            </label>
+                          ))}
+                        </div>
+                      </div>
+
+                      <div className="rounded-xl border border-slate-200/70 bg-white/80 p-3 dark:border-slate-800/80 dark:bg-slate-950/40">
+                        <p className="font-semibold text-slate-700 dark:text-slate-200">
+                          Q2. Which step should happen before applying the main
+                          workflow?
+                        </p>
+                        <div className="mt-2 grid gap-2 text-[11px]">
+                          {[
+                            "Gather required assets and inputs",
+                            "Publish final output immediately",
+                            "Skip reviews entirely",
+                            "Ignore the lesson summary",
+                          ].map((choice, index) => (
+                            <label
+                              key={choice}
+                              className="flex items-center gap-2 rounded-lg border border-slate-200/70 bg-white/70 px-2 py-2 dark:border-slate-800/80 dark:bg-slate-950/40"
+                            >
+                              <input
+                                type="radio"
+                                name="quiz-q2"
+                                disabled
+                                className="h-3 w-3"
+                              />
+                              <span>{`${String.fromCharCode(65 + index)}. ${choice}`}</span>
+                            </label>
+                          ))}
+                        </div>
+                      </div>
+
+                      <div className="rounded-xl border border-slate-200/70 bg-white/80 p-3 dark:border-slate-800/80 dark:bg-slate-950/40">
+                        <p className="font-semibold text-slate-700 dark:text-slate-200">
+                          Q3. Which outcome best indicates completion?
+                        </p>
+                        <div className="mt-2 grid gap-2 text-[11px]">
+                          {[
+                            "Checklist items confirmed and summary reviewed",
+                            "Only the first step attempted",
+                            "Notes left blank",
+                            "No resources collected",
+                          ].map((choice, index) => (
+                            <label
+                              key={choice}
+                              className="flex items-center gap-2 rounded-lg border border-slate-200/70 bg-white/70 px-2 py-2 dark:border-slate-800/80 dark:bg-slate-950/40"
+                            >
+                              <input
+                                type="radio"
+                                name="quiz-q3"
+                                disabled
+                                className="h-3 w-3"
+                              />
+                              <span>{`${String.fromCharCode(65 + index)}. ${choice}`}</span>
+                            </label>
+                          ))}
+                        </div>
+                      </div>
+
+                      <div className="rounded-xl border border-slate-200/70 bg-white/80 p-3 dark:border-slate-800/80 dark:bg-slate-950/40">
+                        <p className="font-semibold text-slate-700 dark:text-slate-200">
+                          Q4. What should you do after completing the lesson?
+                        </p>
+                        <div className="mt-2 grid gap-2 text-[11px]">
+                          {[
+                            "Reflect, capture notes, and plan next steps",
+                            "Discard the lesson resources",
+                            "Avoid sharing feedback",
+                            "Skip the recap",
+                          ].map((choice, index) => (
+                            <label
+                              key={choice}
+                              className="flex items-center gap-2 rounded-lg border border-slate-200/70 bg-white/70 px-2 py-2 dark:border-slate-800/80 dark:bg-slate-950/40"
+                            >
+                              <input
+                                type="radio"
+                                name="quiz-q4"
+                                disabled
+                                className="h-3 w-3"
+                              />
+                              <span>{`${String.fromCharCode(65 + index)}. ${choice}`}</span>
+                            </label>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  ) : null}
+                </div>
+                <div className="mt-3 flex flex-wrap items-end justify-end gap-2">
+                  <button
+                    className="rounded-full border border-slate-200 bg-slate-100 px-4 py-2 text-xs font-semibold text-slate-700 transition hover:border-slate-300 dark:border-slate-800 dark:bg-slate-950/40 dark:text-slate-200 flex items-center gap-1"
+                    type="button"
+                    onClick={() => setIsDoubtOpen(true)}
+                  >
+                    Open doubt solver
+                  </button>
                 </div>
               </div>
             </div>
@@ -549,7 +686,9 @@ export default function CoursePage() {
                       placeholder="Share what worked well or what should improve..."
                       rows={4}
                       value={feedbackComment}
-                      onChange={(event) => setFeedbackComment(event.target.value)}
+                      onChange={(event) =>
+                        setFeedbackComment(event.target.value)
+                      }
                     />
                   </div>
                   <button
