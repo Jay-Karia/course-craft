@@ -553,6 +553,38 @@ export default function CoursePage() {
                 </div>
               </div>
             </div>
+            <div className="rounded-2xl border border-slate-200/70 bg-white/90 p-5 shadow-[0_8px_30px_-16px_rgba(15,23,42,0.35)] dark:border-slate-800/80 dark:bg-slate-900/70">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                    Invite friends
+                  </p>
+                  <h3 className="text-sm font-semibold">Learn together</h3>
+                </div>
+              </div>
+              <p className="mt-2 text-xs text-slate-600 dark:text-slate-400">
+                Invite classmates to join this course and keep each other
+                accountable.
+              </p>
+              <div className="mt-3 flex flex-wrap gap-2">
+                <input
+                  className="min-w-50 flex-1 rounded-full border border-slate-200/70 bg-white/80 px-3 py-2 text-xs text-slate-700 shadow-sm outline-none transition placeholder:text-slate-400 focus:border-slate-300 dark:border-slate-800/80 dark:bg-slate-950/40 dark:text-slate-200"
+                  placeholder="Add emails (comma-separated)"
+                />
+                <button
+                  className="rounded-full border border-slate-200 bg-slate-100 px-4 py-2 text-xs font-semibold text-slate-700 transition hover:border-slate-300 dark:border-slate-800 dark:bg-slate-950/40 dark:text-slate-200"
+                  type="button"
+                >
+                  Send invites
+                </button>
+                <button
+                  className="rounded-full border border-slate-200 bg-white px-4 py-2 text-xs font-semibold text-slate-700 transition hover:border-slate-300 dark:border-slate-800 dark:bg-slate-950/40 dark:text-slate-200"
+                  type="button"
+                >
+                  Copy invite link
+                </button>
+              </div>
+            </div>
           </section>
 
           <aside className="space-y-4">
