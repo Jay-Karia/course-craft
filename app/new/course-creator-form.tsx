@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useTransition } from "react";
+import { useState, useTransition } from "react";
 import ScrollableFeed from "@/components/scrollable-feed";
 import {
   Select,
@@ -23,6 +23,7 @@ import type { CourseCreationData } from "@/types/global";
 export default function CourseCreatorForm() {
   const [rawText, setRawText] = useState("");
   const [textError, setTextError] = useState<string | null>(null);
+  const [serverError, setServerError] = useState<string | null>(null);
   const [links, setLinks] = useState<string[]>([]);
   const [fileUrls, setFileUrls] = useState<string[]>([]);
   const [audience, setAudience] = useState("");
@@ -33,14 +34,6 @@ export default function CourseCreatorForm() {
   const [includeQuizzes, setIncludeQuizzes] = useState(false);
   const [isPending, startTransition] = useTransition();
 
-  const textStats = useMemo(() => {
-    const trimmed = rawText.trim();
-    return {
-      words: trimmed ? trimmed.split(/\s+/).length : 0,
-      chars: trimmed.length,
-    };
-  }, [rawText]);
-
   const handleGenerate = () => {
     if (!rawText.trim()) {
       setTextError("Raw text is required.");
@@ -48,6 +41,7 @@ export default function CourseCreatorForm() {
     }
 
     setTextError(null);
+    setServerError(null);
 
     const payload: CourseCreationData = {
       text: rawText,
@@ -64,7 +58,14 @@ export default function CourseCreatorForm() {
     };
 
     startTransition(async () => {
-      await createCourse(payload);
+      try {
+        const result = await createCourse(payload);
+        if (result && !result.ok) {
+          setServerError(result.error);
+        }
+      } catch {
+        setServerError("Failed to create course. Try again.");
+      }
     });
   };
 
@@ -95,9 +96,6 @@ export default function CourseCreatorForm() {
                       <p className="text-xs text-slate-500 dark:text-slate-400">
                         Provide multiple sources to enrich the course.
                       </p>
-                    </div>
-                    <div className="flex items-center gap-2 rounded-full border border-slate-200/70 bg-white/80 px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:border-slate-700/70 dark:bg-slate-950/60 dark:text-slate-300">
-                      Sources {links.length + fileUrls.length}
                     </div>
                   </div>
 
@@ -315,6 +313,11 @@ export default function CourseCreatorForm() {
                         {isPending ? "Generating..." : "Generate"}
                       </span>
                     </HoverBorderGradient>
+                    {serverError ? (
+                      <p className="text-xs font-medium text-rose-500">
+                        {serverError}
+                      </p>
+                    ) : null}
                   </div>
                 </div>
               </aside>
