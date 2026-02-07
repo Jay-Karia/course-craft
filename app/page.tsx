@@ -5,15 +5,19 @@ import ShinyText from "@/components/ShinyText";
 import { ArrowRightIcon, Sparkle } from "lucide-react";
 import Link from "next/link";
 import { useTheme } from "next-themes";
-import { useMemo } from "react";
+import { useEffect, useMemo } from "react";
 import { useAuth } from "@clerk/nextjs";
-import { redirect } from "next/navigation";
+import { useRouter } from "next/navigation";
 
 export default function Home() {
   const { isSignedIn } = useAuth();
-  if (isSignedIn) {
-    redirect("/dashboard");
-  }
+  const router = useRouter();
+
+  useEffect(() => {
+    if (isSignedIn) {
+      router.replace("/dashboard");
+    }
+  }, [isSignedIn, router]);
 
   const { resolvedTheme } = useTheme();
 
@@ -33,6 +37,10 @@ export default function Home() {
     [],
   );
   const effectOptions = resolvedTheme === "light" ? lightEffectOptions : {};
+
+  if (isSignedIn) {
+    return null;
+  }
 
   return (
     <div className="relative h-full w-full flex items-center justify-center px-4 sm:px-6 lg:px-8">
