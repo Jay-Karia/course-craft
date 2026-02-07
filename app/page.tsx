@@ -5,19 +5,24 @@ import ShinyText from "@/components/ShinyText";
 import { ArrowRightIcon, Sparkle } from "lucide-react";
 import Link from "next/link";
 import { useTheme } from "next-themes";
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useAuth } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
 
 export default function Home() {
   const { isSignedIn } = useAuth();
   const router = useRouter();
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
     if (isSignedIn) {
       router.replace("/dashboard");
     }
   }, [isSignedIn, router]);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const { resolvedTheme } = useTheme();
 
@@ -36,7 +41,7 @@ export default function Home() {
     }),
     [],
   );
-  const effectOptions = resolvedTheme === "light" ? lightEffectOptions : {};
+  const effectOptions = mounted && resolvedTheme === "light" ? lightEffectOptions : {};
 
   if (isSignedIn) {
     return null;
@@ -50,7 +55,7 @@ export default function Home() {
           <Sparkle className="inline-block mr-2 h-4 w-4 dark:text-blue-400 text-blue-600 animate-float" />
           AI Course Creator
         </div>
-        {resolvedTheme === "dark" ? (
+        {mounted && resolvedTheme === "dark" ? (
           <>
             <h1 className="text-center text-2xl xs:text-3xl sm:text-4xl lg:text-5xl font-extrabold max-w-88 xs:max-w-[28rem] sm:max-w-xl lg:max-w-none">
               Transform boring texts <br /> into <br /> engaging courses
