@@ -28,6 +28,10 @@ export default function Navbar() {
       link: "/courses",
     },
     {
+      name: "Pricing",
+      link: "/pricing",
+    },
+    {
       name: "About",
       link: "/about",
     },

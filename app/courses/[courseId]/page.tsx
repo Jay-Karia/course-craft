@@ -2,7 +2,8 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { useParams } from "next/navigation";
+import { redirect, useParams } from "next/navigation";
+import {useAuth} from "@clerk/nextjs";
 
 type CourseVideo = {
   provider: string;
@@ -39,6 +40,11 @@ const APPWRITE_VIDEO_URL =
   "https://sgp.cloud.appwrite.io/v1/storage/buckets/69872bd5002381c18915/files/698762350015908687a3/view?project=6985f4df000a987b6a15&mode=public";
 
 export default function CoursePage() {
+  const {isSignedIn} = useAuth();
+  if (!isSignedIn) {
+    redirect("/");
+  }
+
   const params = useParams<{ courseId: string }>();
   const courseId = params?.courseId;
   const [course, setCourse] = useState<CourseDetails | null>(null);
