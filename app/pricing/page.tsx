@@ -20,7 +20,7 @@ const pricingTiers = [
 	},
 	{
 		name: "Creator",
-		price: "$249",
+		price: "$569",
 		cadence: "/mo",
 		description: "For creators publishing weekly content with advanced AI tools.",
 		cta: "Upgrade to Creator",
