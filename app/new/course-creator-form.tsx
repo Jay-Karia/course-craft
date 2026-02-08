@@ -24,7 +24,7 @@ import type { CourseCreationData } from "@/types/global";
 export default function CourseCreatorForm() {
   const router = useRouter();
   const [rawText, setRawText] = useState("");
-  const [prompt, setPrompt] = useState("")
+  const [prompt, setPrompt] = useState("");
   const [textError, setTextError] = useState<string | null>(null);
   const [serverError, setServerError] = useState<string | null>(null);
   const [links, setLinks] = useState<string[]>([]);
@@ -122,7 +122,7 @@ export default function CourseCreatorForm() {
 
                     <div className="mt-6 grid gap-4">
                       <textarea
-                        className="mt-4 h-32 w-full resize-none rounded-xl border border-slate-200/80 bg-white/80 p-3 text-sm text-slate-700 shadow-sm outline-none ring-0 placeholder:text-slate-400 focus:border-slate-300 dark:border-slate-700/80 dark:bg-slate-950/60 dark:text-slate-200"
+                        className="h-32 w-full resize-none rounded-xl border border-slate-200/80 bg-white/80 p-3 text-sm text-slate-700 shadow-sm outline-none ring-0 placeholder:text-slate-400 focus:border-slate-300 dark:border-slate-700/80 dark:bg-slate-950/60 dark:text-slate-200"
                         placeholder="Enter your prompt here."
                         value={prompt}
                         onChange={(event) => setPrompt(event.target.value)}
@@ -139,7 +139,7 @@ export default function CourseCreatorForm() {
 
                 {/* Course Material */}
                 <section className="space-y-6">
-                  <div className="rounded-2xl border border-slate-200/70 bg-white/80 p-6 shadow-[0_8px_30px_-16px_rgba(15,23,42,0.35)] dark:border-slate-800/80 dark:bg-slate-900/70">
+                  <div className="rounded-2xl border border-slate-200/70 bg-white/80 p-6 shadow-[0_8px_30px_-16px_rgba(15,23,42,0.35)] dark:border-slate-800/80 dark:bg-slate-900/70 mb-40">
                     <div className="flex flex-wrap items-center justify-between gap-3">
                       <div>
                         <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">

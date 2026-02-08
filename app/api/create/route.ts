@@ -182,7 +182,7 @@ const generateCourseCopy = async (input: {
   const outputText = getGeminiText(json);
   if (!outputText) return null;
   const parsed = extractJsonObject(outputText);
-  console.log(parsed)
+  console.log(parsed);
   return parseAiCopy(parsed);
 };
 
@@ -197,7 +197,11 @@ const parseAiOutline = (value: unknown): AiCourseOutline | null => {
   const modules = Array.isArray(record.modules) ? record.modules : [];
 
   if (!title || !description || modules.length === 0) {
-    console.error("[parseAiOutline] Missing required fields:", { title: !!title, description: !!description, modulesCount: modules.length });
+    console.error("[parseAiOutline] Missing required fields:", {
+      title: !!title,
+      description: !!description,
+      modulesCount: modules.length,
+    });
     return null;
   }
 
@@ -210,11 +214,15 @@ const parseAiOutline = (value: unknown): AiCourseOutline | null => {
           ? module.description.trim()
           : "";
       const estimatedTime =
-        typeof module?.estimatedTime === "string" ? module.estimatedTime.trim() : "";
+        typeof module?.estimatedTime === "string"
+          ? module.estimatedTime.trim()
+          : "";
       const lessons = Array.isArray(module?.lessons) ? module.lessons : [];
 
       if (!moduleTitle || !moduleDescription) {
-        console.error(`[parseAiOutline] Module ${idx} missing title or description`);
+        console.error(
+          `[parseAiOutline] Module ${idx} missing title or description`,
+        );
         return null;
       }
 
@@ -225,7 +233,9 @@ const parseAiOutline = (value: unknown): AiCourseOutline | null => {
           const lessonSummary =
             typeof lesson?.summary === "string" ? lesson.summary.trim() : "";
           const videoScript =
-            typeof lesson?.videoScript === "string" ? lesson.videoScript.trim() : "";
+            typeof lesson?.videoScript === "string"
+              ? lesson.videoScript.trim()
+              : "";
           const duration =
             typeof lesson?.duration === "string" ? lesson.duration.trim() : "";
           const topics = Array.isArray(lesson?.topics)
@@ -236,7 +246,9 @@ const parseAiOutline = (value: unknown): AiCourseOutline | null => {
             : [];
 
           if (!lessonTitle || !lessonSummary) {
-            console.error(`[parseAiOutline] Lesson ${lessonIdx} in module ${idx} missing title or summary`);
+            console.error(
+              `[parseAiOutline] Lesson ${lessonIdx} in module ${idx} missing title or summary`,
+            );
             return null;
           }
 
@@ -244,12 +256,16 @@ const parseAiOutline = (value: unknown): AiCourseOutline | null => {
           let quiz = undefined;
           if (lesson?.quiz && Array.isArray(lesson.quiz.questions)) {
             quiz = {
-              questions: lesson.quiz.questions.map((q: any) => ({
-                question: typeof q?.question === "string" ? q.question : "",
-                options: Array.isArray(q?.options) ? q.options : [],
-                correctAnswer: typeof q?.correctAnswer === "string" ? q.correctAnswer : "",
-                explanation: typeof q?.explanation === "string" ? q.explanation : "",
-              })).filter((q: any) => q.question && q.correctAnswer),
+              questions: lesson.quiz.questions
+                .map((q: any) => ({
+                  question: typeof q?.question === "string" ? q.question : "",
+                  options: Array.isArray(q?.options) ? q.options : [],
+                  correctAnswer:
+                    typeof q?.correctAnswer === "string" ? q.correctAnswer : "",
+                  explanation:
+                    typeof q?.explanation === "string" ? q.explanation : "",
+                }))
+                .filter((q: any) => q.question && q.correctAnswer),
             };
             if (quiz.questions.length === 0) quiz = undefined;
           }
@@ -285,13 +301,15 @@ const parseAiOutline = (value: unknown): AiCourseOutline | null => {
     return null;
   }
 
-  console.log(`[parseAiOutline] Successfully parsed ${cleanedModules.length} modules with ${cleanedModules.reduce((sum, m) => sum + m.lessons.length, 0)} total lessons`);
+  console.log(
+    `[parseAiOutline] Successfully parsed ${cleanedModules.length} modules with ${cleanedModules.reduce((sum, m) => sum + m.lessons.length, 0)} total lessons`,
+  );
 
   return {
     title,
     description,
     totalDuration,
-    modules: cleanedModules
+    modules: cleanedModules,
   };
 };
 
@@ -361,7 +379,6 @@ RETURN THIS EXACT JSON STRUCTURE:
 }
 `;
 
-
   const response = await fetch(
     `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
     {
@@ -393,7 +410,11 @@ RETURN THIS EXACT JSON STRUCTURE:
 
   if (!response.ok) {
     const errorText = await response.text().catch(() => "");
-    console.error("[Gemini course outline] HTTP Error:", response.status, errorText);
+    console.error(
+      "[Gemini course outline] HTTP Error:",
+      response.status,
+      errorText,
+    );
     return null;
   }
 
@@ -414,7 +435,9 @@ RETURN THIS EXACT JSON STRUCTURE:
   if (geminiJson) {
     const geminiOutline = parseAiOutline(geminiJson);
     if (geminiOutline) {
-      console.log(`[generateCourseOutline] Successfully parsed from Gemini JSON`);
+      console.log(
+        `[generateCourseOutline] Successfully parsed from Gemini JSON`,
+      );
       return geminiOutline;
     }
   }
@@ -424,7 +447,9 @@ RETURN THIS EXACT JSON STRUCTURE:
     const parsed = extractJsonObject(outputText);
     const result = parseAiOutline(parsed);
     if (result) {
-      console.log(`[generateCourseOutline] Successfully parsed from output text`);
+      console.log(
+        `[generateCourseOutline] Successfully parsed from output text`,
+      );
       return result;
     }
   }
@@ -468,8 +493,13 @@ export async function POST(request: Request) {
       typeof body?.thumbnailUrl === "string" ? body.thumbnailUrl.trim() : "";
 
     const audience =
-      typeof body?.config?.audience === "string" ? body.config.audience : "general learners";
-    const tone = typeof body?.config?.tone === "string" ? body.config.tone : "professional";
+      typeof body?.config?.audience === "string"
+        ? body.config.audience
+        : "general learners";
+    const tone =
+      typeof body?.config?.tone === "string"
+        ? body.config.tone
+        : "professional";
     const videoLength =
       typeof body?.config?.videoLength === "string"
         ? body.config.videoLength
@@ -554,7 +584,11 @@ export async function POST(request: Request) {
       },
     };
 
-    const buildVideo = (prompt: string, script?: string, duration?: string) => ({
+    const buildVideo = (
+      prompt: string,
+      script?: string,
+      duration?: string,
+    ) => ({
       provider: "AI Video Generator",
       status: "ready_for_generation",
       duration: duration || videoLength,
@@ -581,7 +615,9 @@ export async function POST(request: Request) {
           topics: lesson.topics ?? [],
           keyPoints: lesson.keyPoints ?? [],
           duration: lesson.duration || videoLength,
-          videoScript: lesson.videoScript || `Script for ${lesson.title}: ${lesson.summary}`,
+          videoScript:
+            lesson.videoScript ||
+            `Script for ${lesson.title}: ${lesson.summary}`,
           video: buildVideo(
             `Create a ${lesson.duration || videoLength} video lesson: ${lesson.title}. ${lesson.summary}`,
             lesson.videoScript,
@@ -613,10 +649,11 @@ export async function POST(request: Request) {
     };
 
     const totalLessons = modules.reduce((sum, m) => sum + m.lessons.length, 0);
-    console.log(`[SUCCESS] Course generated with ${modules.length} modules and ${totalLessons} lessons`);
+    console.log(
+      `[SUCCESS] Course generated with ${modules.length} modules and ${totalLessons} lessons`,
+    );
 
     return NextResponse.json({ ok: true, course });
-
   } catch (error: any) {
     console.error("[POST /api/create] Critical Failure:", error);
     return NextResponse.json(

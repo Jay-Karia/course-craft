@@ -27,11 +27,15 @@ export default function DoubtSolver({ lessonTitle }: DoubtSolverProps) {
 
       <div className="mt-4 space-y-3">
         <div className="rounded-xl border border-slate-200/70 bg-slate-50/70 p-3 text-xs text-slate-600 dark:border-slate-800/80 dark:bg-slate-950/40 dark:text-slate-300">
-          <p className="font-semibold text-slate-700 dark:text-slate-200">You</p>
+          <p className="font-semibold text-slate-700 dark:text-slate-200">
+            You
+          </p>
           <p>What is the main takeaway for this lesson?</p>
         </div>
         <div className="rounded-xl border border-slate-200/70 bg-white/90 p-3 text-xs text-slate-600 dark:border-slate-800/80 dark:bg-slate-900/60 dark:text-slate-300">
-          <p className="font-semibold text-slate-700 dark:text-slate-200">AI Tutor</p>
+          <p className="font-semibold text-slate-700 dark:text-slate-200">
+            AI Tutor
+          </p>
           <p>
             Placeholder response. The AI tutor will answer with lesson-specific
             guidance and references.

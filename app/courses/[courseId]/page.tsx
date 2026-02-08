@@ -428,7 +428,9 @@ export default function CoursePage() {
                           <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
                             Module {index + 1}
                           </p>
-                          <p className="text-sm font-semibold">{module.title}</p>
+                          <p className="text-sm font-semibold">
+                            {module.title}
+                          </p>
                         </div>
                         <span className="rounded-full border border-slate-200/70 bg-white/80 px-2 py-0.5 text-xs font-semibold text-slate-700 dark:border-slate-700/70 dark:bg-slate-900/60 dark:text-slate-200">
                           {module.lessons.length} lessons
@@ -480,8 +482,9 @@ export default function CoursePage() {
                   <div className="rounded-xl border border-amber-200/80 bg-amber-50/70 p-4 text-xs text-amber-700 dark:border-amber-400/40 dark:bg-amber-500/10 dark:text-amber-200">
                     <p className="font-semibold">Module data unavailable</p>
                     <p className="mt-1">
-                      We couldn&apos;t load the course modules and lessons. Please
-                      return to the course creator and regenerate the outline.
+                      We couldn&apos;t load the course modules and lessons.
+                      Please return to the course creator and regenerate the
+                      outline.
                     </p>
                     <Link
                       href="/new"
