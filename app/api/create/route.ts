@@ -437,19 +437,22 @@ RETURN THIS EXACT JSON STRUCTURE:
 export async function POST(request: Request) {
   try {
     const body = await request.json().catch(() => null);
+    const rawPrompt = typeof body?.prompt === "string" ? body.prompt : "";
     const rawText = typeof body?.text === "string" ? body.text : "";
+    const trimmedPrompt = rawPrompt.trim();
     const trimmedText = rawText.trim();
+    const sourceText = trimmedPrompt || trimmedText;
     const generationErrors: string[] = [];
 
-    if (!trimmedText) {
+    if (!sourceText) {
       return NextResponse.json(
-        { ok: false, error: "Raw text is required." },
+        { ok: false, error: "A prompt is required." },
         { status: 400 },
       );
     }
 
     const titleFromText = (() => {
-      const firstLine = trimmedText
+      const firstLine = sourceText
         .split(/\n+/)
         .find((line: string) => line.trim());
       if (!firstLine) return "Untitled Course";
@@ -487,7 +490,7 @@ export async function POST(request: Request) {
     // Generate course copy (title and description)
     console.log("[AI] Step 1: Generating course copy...");
     const aiCopy = await generateCourseCopy({
-      text: trimmedText,
+      text: sourceText,
       audience,
       tone,
       videoLength,
@@ -507,7 +510,7 @@ export async function POST(request: Request) {
     // Generate detailed course outline with scripts
     console.log("[AI] Step 2: Generating detailed course outline...");
     const aiOutline = await generateCourseOutline({
-      text: trimmedText,
+      text: sourceText,
       audience,
       tone,
       videoLength,
@@ -594,7 +597,8 @@ export async function POST(request: Request) {
       modules,
       generationErrors,
       source: {
-        textLength: trimmedText.length,
+        textLength: sourceText.length,
+        prompt: trimmedPrompt,
         links: Array.isArray(body?.links) ? body.links : [],
         fileUrls: Array.isArray(body?.fileUrls) ? body.fileUrls : [],
       },

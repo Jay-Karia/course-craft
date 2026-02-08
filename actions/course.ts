@@ -13,9 +13,9 @@ export async function createCourse(data: CourseCreationData) {
       return { ok: false, error: "You must be signed in to create a course." };
     }
 
-    const trimmedText = data.text?.trim() ?? "";
+    const trimmedText = data.prompt?.trim() ?? "";
     if (!trimmedText) {
-      return { ok: false, error: "Raw text is required." };
+      return { ok: false, error: "Prompt is required." };
     }
 
     const maxChapters = Number.isFinite(data.config?.maxChapters)
@@ -35,6 +35,7 @@ export async function createCourse(data: CourseCreationData) {
     const payload = {
       ...data,
       text: trimmedText,
+      prompt: data.prompt,
       fileData,
       urlsData,
       config: {

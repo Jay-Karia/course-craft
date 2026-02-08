@@ -24,6 +24,7 @@ import type { CourseCreationData } from "@/types/global";
 export default function CourseCreatorForm() {
   const router = useRouter();
   const [rawText, setRawText] = useState("");
+  const [prompt, setPrompt] = useState("")
   const [textError, setTextError] = useState<string | null>(null);
   const [serverError, setServerError] = useState<string | null>(null);
   const [links, setLinks] = useState<string[]>([]);
@@ -37,8 +38,8 @@ export default function CourseCreatorForm() {
   const [isPending, startTransition] = useTransition();
 
   const handleGenerate = () => {
-    if (!rawText.trim()) {
-      setTextError("Raw text is required.");
+    if (!prompt.trim()) {
+      setTextError("Prompt is required.");
       return;
     }
 
@@ -48,6 +49,7 @@ export default function CourseCreatorForm() {
     const payload: CourseCreationData = {
       text: rawText,
       fileUrls,
+      prompt,
       links,
       config: {
         audience,
@@ -102,36 +104,28 @@ export default function CourseCreatorForm() {
             </header>
 
             <div className="grid gap-6 lg:grid-cols-[1.6fr_1fr]">
-              <section className="space-y-6">
-                <div className="rounded-2xl border border-slate-200/70 bg-white/80 p-6 shadow-[0_8px_30px_-16px_rgba(15,23,42,0.35)] dark:border-slate-800/80 dark:bg-slate-900/70">
-                  <div className="flex flex-wrap items-center justify-between gap-3">
-                    <div>
-                      <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
-                        Add your source material
-                      </h2>
-                      <p className="text-xs text-slate-500 dark:text-slate-400">
-                        Provide multiple sources to enrich the course.
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="mt-6 grid gap-4">
-                    <div className="rounded-xl border border-dashed border-slate-300/70 bg-slate-50/70 p-5 dark:border-slate-700/80 dark:bg-slate-900/40">
-                      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                        <div>
-                          <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-200">
-                            Raw text
-                          </h3>
-                          <p className="text-xs text-slate-500 dark:text-slate-400">
-                            Paste notes, transcripts, or outlines.
-                          </p>
-                        </div>
+              <div className="flex flex-col gap-6">
+                {/* Course Prompt */}
+                <section className="space-y-6">
+                  <div className="rounded-2xl border border-slate-200/70 bg-white/80 p-6 shadow-[0_8px_30px_-16px_rgba(15,23,42,0.35)] dark:border-slate-800/80 dark:bg-slate-900/70">
+                    <div className="flex flex-wrap items-center justify-between gap-3">
+                      <div>
+                        <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
+                          Write a prompt to generate your course
+                        </h2>
+                        <p className="text-xs text-slate-500 dark:text-slate-400">
+                          The more details you provide, the better the course
+                          will be.
+                        </p>
                       </div>
+                    </div>
+
+                    <div className="mt-6 grid gap-4">
                       <textarea
                         className="mt-4 h-32 w-full resize-none rounded-xl border border-slate-200/80 bg-white/80 p-3 text-sm text-slate-700 shadow-sm outline-none ring-0 placeholder:text-slate-400 focus:border-slate-300 dark:border-slate-700/80 dark:bg-slate-950/60 dark:text-slate-200"
-                        placeholder="Paste raw notes or lesson ideas here..."
-                        value={rawText}
-                        onChange={(event) => setRawText(event.target.value)}
+                        placeholder="Enter your prompt here."
+                        value={prompt}
+                        onChange={(event) => setPrompt(event.target.value)}
                         required
                       />
                       {textError ? (
@@ -140,44 +134,82 @@ export default function CourseCreatorForm() {
                         </p>
                       ) : null}
                     </div>
+                  </div>
+                </section>
 
-                    <div className="grid gap-4 sm:grid-cols-2">
+                {/* Course Material */}
+                <section className="space-y-6">
+                  <div className="rounded-2xl border border-slate-200/70 bg-white/80 p-6 shadow-[0_8px_30px_-16px_rgba(15,23,42,0.35)] dark:border-slate-800/80 dark:bg-slate-900/70">
+                    <div className="flex flex-wrap items-center justify-between gap-3">
+                      <div>
+                        <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
+                          Add your source material
+                        </h2>
+                        <p className="text-xs text-slate-500 dark:text-slate-400">
+                          Provide multiple sources to enrich the course.
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="mt-6 grid gap-4">
                       <div className="rounded-xl border border-dashed border-slate-300/70 bg-slate-50/70 p-5 dark:border-slate-700/80 dark:bg-slate-900/40">
-                        <div className="flex items-start justify-between">
+                        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                           <div>
                             <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-200">
-                              Files
+                              Raw text
                             </h3>
                             <p className="text-xs text-slate-500 dark:text-slate-400">
-                              Upload files like PDFs, or docs.
+                              Paste notes, transcripts, or outlines.
                             </p>
                           </div>
                         </div>
-                        <div className="mt-4 flex flex-col items-center justify-center rounded-lg border border-dashed border-slate-300/80 bg-white/70 px-4 py-6 text-center text-xs text-slate-500 dark:border-slate-700/80 dark:bg-slate-950/40">
-                          Drop PDFs here or
-                          <UploadFileButton
-                            onUploaded={(files) =>
-                              setFileUrls(files.map((file) => file.url))
-                            }
-                          />
-                        </div>
+                        <textarea
+                          className="mt-4 h-32 w-full resize-none rounded-xl border border-slate-200/80 bg-white/80 p-3 text-sm text-slate-700 shadow-sm outline-none ring-0 placeholder:text-slate-400 focus:border-slate-300 dark:border-slate-700/80 dark:bg-slate-950/60 dark:text-slate-200"
+                          placeholder="Paste raw notes or lesson ideas here..."
+                          value={rawText}
+                          onChange={(event) => setRawText(event.target.value)}
+                          required
+                        />
                       </div>
 
-                      <div className="rounded-xl border border-dashed border-slate-300/70 bg-slate-50/70 p-5 dark:border-slate-700/80 dark:bg-slate-900/40">
-                        <div>
-                          <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-200">
-                            Links & references
-                          </h3>
-                          <p className="text-xs text-slate-500 dark:text-slate-400">
-                            Add articles, videos, or websites.
-                          </p>
+                      <div className="grid gap-4 sm:grid-cols-2">
+                        <div className="rounded-xl border border-dashed border-slate-300/70 bg-slate-50/70 p-5 dark:border-slate-700/80 dark:bg-slate-900/40">
+                          <div className="flex items-start justify-between">
+                            <div>
+                              <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-200">
+                                Files
+                              </h3>
+                              <p className="text-xs text-slate-500 dark:text-slate-400">
+                                Upload files like PDFs, or docs.
+                              </p>
+                            </div>
+                          </div>
+                          <div className="mt-4 flex flex-col items-center justify-center rounded-lg border border-dashed border-slate-300/80 bg-white/70 px-4 py-6 text-center text-xs text-slate-500 dark:border-slate-700/80 dark:bg-slate-950/40">
+                            Drop PDFs here or
+                            <UploadFileButton
+                              onUploaded={(files) =>
+                                setFileUrls(files.map((file) => file.url))
+                              }
+                            />
+                          </div>
                         </div>
-                        <CourseLinks links={links} onChange={setLinks} />
+
+                        <div className="rounded-xl border border-dashed border-slate-300/70 bg-slate-50/70 p-5 dark:border-slate-700/80 dark:bg-slate-900/40">
+                          <div>
+                            <h3 className="text-sm font-semibold text-slate-800 dark:text-slate-200">
+                              Links & references
+                            </h3>
+                            <p className="text-xs text-slate-500 dark:text-slate-400">
+                              Add articles, videos, or websites.
+                            </p>
+                          </div>
+                          <CourseLinks links={links} onChange={setLinks} />
+                        </div>
                       </div>
                     </div>
                   </div>
-                </div>
-              </section>
+                </section>
+              </div>
 
               <aside className="space-y-6">
                 <div className="rounded-2xl border border-slate-200/70 bg-white/80 p-6 shadow-[0_8px_30px_-16px_rgba(15,23,42,0.35)] dark:border-slate-800/80 dark:bg-slate-900/70">

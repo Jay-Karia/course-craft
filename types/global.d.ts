@@ -13,6 +13,7 @@ export type Config = {
 
 export type CourseCreationData = {
   text: string;
+  prompt: string;
   fileUrls: string[];
   links: string[];
   config: Config;
